@@ -25,7 +25,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://codingwhat.github.io/images/hash_func.png">
 <meta property="article:published_time" content="2024-08-05T14:40:01.000Z">
-<meta property="article:modified_time" content="2024-08-06T11:55:27.441Z">
+<meta property="article:modified_time" content="2024-08-06T11:56:35.412Z">
 <meta property="article:author" content="codingWhat">
 <meta property="article:tag" content="GO">
 <meta property="article:tag" content="本地缓存">
@@ -474,7 +474,8 @@
 <h3 id="高性能优化"><a href="#高性能优化" class="headerlink" title="高性能优化"></a>高性能优化</h3><h4 id="写操作"><a href="#写操作" class="headerlink" title="写操作"></a>写操作</h4><p><strong>隔离:</strong>  按channel隔离增、删、改<br><strong>同步转异步:</strong>  链表并发写操作，改为异步单协程更新<br><strong>支持非阻塞</strong></p>
 <h4 id="读操作"><a href="#读操作" class="headerlink" title="读操作"></a>读操作</h4><p><strong>批量操作:</strong> 采用ringbuffer，批量更新链表</p>
 <h4 id="内存优化"><a href="#内存优化" class="headerlink" title="内存优化"></a>内存优化</h4><p>采用sync.Pool池化ringbuffer对象，避免频繁创建对象</p>
-<h2 id="压测对比"><a href="#压测对比" class="headerlink" title="压测对比"></a>压测对比</h2><table>
+<h2 id="压测对比"><a href="#压测对比" class="headerlink" title="压测对比"></a>压测对比</h2><p><a target="_blank" rel="noopener" href="https://github.com/codingWhat/armory/tree/main/cache/localcache">代码地址</a></p>
+<table>
 <thead>
 <tr>
 <th>压测case</th>
