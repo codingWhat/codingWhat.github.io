@@ -264,7 +264,7 @@
       
       <a class="index-excerpt index-excerpt__noimg" href="/2024/08/09/gmp-understanding/" target="_self">
         <div>
-          对GMP的理解以Goroutine生命周期来看，更像是生产&#x2F;消费模型，goroutine被创建之后，放到对应P的”队列”中, 之后被调度器消费执行。 生产G在生产阶段，底层对应newproc逻辑，通过runqput存储到P里。P有两个地方存储G, runnenxt 和 runq  容量: runnext1个G，runq256个G，因此P总共可以存储257个G 区别： runnext存储的
+          Go启动流程初始化m0和g0，m0和主线程绑定，之后按core核数初始化所有P，将第一个P(即P0)和m0、g0绑定，剩余的P放入空闲队列中。之后会创建g1(runtime.main)，放入P0的本地队列中,之后m0的g0开始执行调度逻辑。 以Goroutine视角理解GMP以Goroutine生命周期来看，更像是生产&#x2F;消费模型，goroutine被创建之后，放到对应P的”队列”中, 之
         </div>
       </a>
 
