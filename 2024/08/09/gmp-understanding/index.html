@@ -35,7 +35,7 @@
 <meta property="og:image" content="http://codingwhat.github.io/images/g_status.png">
 <meta property="og:image" content="http://codingwhat.github.io/images/g0-p0-m0.png">
 <meta property="article:published_time" content="2024-08-09T05:27:45.000Z">
-<meta property="article:modified_time" content="2024-08-09T11:30:29.257Z">
+<meta property="article:modified_time" content="2024-08-09T11:32:47.123Z">
 <meta property="article:author" content="codingWhat">
 <meta property="article:tag" content="GO">
 <meta property="article:tag" content="GO-GMP">
@@ -338,7 +338,8 @@
 <li>保证公平，防止全局<code>runq</code>中的goroutine饿死， 按概率(<code>runtime.SchedTick%61==0</code>)从全局runq中获取G</li>
 <li>从本地<code>runnext</code>和<code>runq</code>中获取</li>
 <li>从全局<code>runq</code>中获取</li>
-<li>从netpoll中获取G</li>
+<li>从netpoll中获取G, 返回第一个，剩下的直接追加到全局<code>runq</code>的尾部</li>
+<li>从其他P那偷取一半G</li>
 </ol>
 <blockquote>
 <p>在P都很繁忙的场景下，<code>全局runq</code>中的G可能迟迟得不到调度，为了公平起见，调度器会统计<code>runtime.SchedTick</code>，每次调度都会++, 当<code>runtime.SchedTick%61==0</code>时,会从<code>全局runq</code>中获取G来执行(高优先级)。</p>
