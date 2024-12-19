@@ -256,6 +256,105 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2024/12/19/rwmutex-deadlock/" target="_self">
+          golang读锁导致的死锁问题分析
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/12/19/rwmutex-deadlock/" target="_self">
+        <div>
+          本文来探讨下业务中错误使用sync.RWMutex的读锁而导致的死锁问题。
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-12-19 12:09" pubdate>
+              2024-12-19
+            </time>
+          </div>
+        
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/12/18/go-mem-optimize-thought/" target="_self">
+          go内存优化分析思路
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/12/18/go-mem-optimize-thought/" target="_self">
+        <div>
+          本文假设读者了解Go内存空间、堆栈等基础概念，若具备一定的go使用经验最佳
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-12-18 16:01" pubdate>
+              2024-12-18
+            </time>
+          </div>
+        
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/10/23/how-to-migrate-data/" target="_self">
+          如何优雅迁移数据
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/10/23/how-to-migrate-data/" target="_self">
+        <div>
+          数据迁移的背景基本上数据迁移无外乎如下原因  业务增长 降本增效  常见迁移的策略有如下两种方式  停机迁移 不停机迁移  像金融场景会采用第一种，一般会提前发布公告，在迁移期间服务不可用。而大部分互联网的场景更倾向于采用不停机的优雅迁移策略。 迁移时机 已在测试环境模拟完毕 凌晨, 数据量少  迁移阶段 全量拷贝(mysqldump&#x2F;XtraBackup, redis-shake) 写
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-10-23 18:25" pubdate>
+              2024-10-23
+            </time>
+          </div>
+        
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2024/08/09/gmp-understanding/" target="_self">
           GMP学习总结
         </a>
@@ -264,7 +363,7 @@
       
       <a class="index-excerpt index-excerpt__noimg" href="/2024/08/09/gmp-understanding/" target="_self">
         <div>
-          Go启动流程初始化m0和g0，m0和主线程绑定，之后按core核数初始化所有P，将第一个P(即P0)和m0、g0绑定，剩余的P放入空闲队列中。之后会创建g1(runtime.main)，放入P0的本地队列中,之后m0的g0开始执行调度逻辑。 以Goroutine视角理解GMP以Goroutine生命周期来看，更像是生产&#x2F;消费模型，goroutine被创建之后，放到对应P的”队列”中, 之
+          调度器前世今生调度器核心职责就是通过复用线程来高效执行G, 目前GMP模型已经非常高效了，然而调度器也是经过一步一步演进来的，早期调度器只有G、M以及全局‘runq’，性能表现并不出色，尤其随着goroutine数增长，当m从全局队列消费G时会导致锁竞争非常严重，除此之外系统调用、阻塞等操作时M会休眠，此时M上的G得不到执行，严重影响性能。为了解决这些问题，Go开发者重新设计调度器，推出了当前“G
         </div>
       </a>
 
@@ -570,49 +669,13 @@
     </article>
   </div>
 
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/07/08/Understating_GoGC/" target="_self">
-          你了解GoGC么？
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/07/08/Understating_GoGC/" target="_self">
-        <div>
-          “你了解GC么？” 好多面试官都爱问这种“简单”问题😅，如果平常没有积累，在那种高压下我想大部分人跟我一样大脑空白、 支支吾吾, 处于已读乱回的状态。其实这类问题就是典型的”冰山模型”，看似很简单一问，实际需要考虑的细节很多，很容易答不好。今天我就尝试来回答这个问题，也算是对自己学习GC的一个阶段性总结。
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-07-08 16:46" pubdate>
-              2024-07-08
-            </time>
-          </div>
-        
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/GO/">#GO</a>
-            
-              <a href="/tags/GC/">#GC</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
 
 
+  <nav aria-label="navigation">
+    <span class="pagination" id="pagination">
+      <span class="page-number current">1</span><a class="page-number" href="/page/2/#board">2</a><a class="extend next" rel="next" href="/page/2/#board"><i class="iconfont icon-arrowright"></i></a>
+    </span>
+  </nav>
 
 
 

@@ -26,7 +26,7 @@
 <meta property="og:image" content="http://codingwhat.github.io/images/go_localcaches_compare.png">
 <meta property="og:image" content="http://codingwhat.github.io/images/hash_func.png">
 <meta property="article:published_time" content="2024-08-05T14:40:01.000Z">
-<meta property="article:modified_time" content="2024-08-18T07:33:01.620Z">
+<meta property="article:modified_time" content="2024-12-19T13:33:21.657Z">
 <meta property="article:author" content="codingWhat">
 <meta property="article:tag" content="GO">
 <meta property="article:tag" content="本地缓存">
@@ -255,7 +255,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          1.5k 字
+          1.7k 字
         
       </span>
     
@@ -266,7 +266,7 @@
         
         
         
-          13 分钟
+          14 分钟
         
       </span>
     
@@ -326,9 +326,19 @@
 <p><img src="/images/go_localcaches_compare.png" srcset="/img/loading.gif" lazyload alt="主流缓存库对比"><br>上述中比较有意思的是Zero-Gc这个概念，我总结下关键信息:<br><strong>如何实现Zero-GC?</strong></p>
 <ol>
 <li>完全避免GC: 采用syscall.MMap申请堆外内存，gc就不会扫描</li>
-<li>规避GC扫描策略: 数组(固定了指针数量) + 非指针map[uint64]uint32 + []byte(参考freecache) 或者 slice + 非指针的map + ringbuffer(参考bigcache)</li>
+<li>规避GC扫描策略:</li>
 </ol>
-<p><strong>如何选择？</strong><br>就笔者的经验来看，比如在http服务中，从缓存库读取[]byte内容，写入socket，这种场景Zero-GC库确实很高效比较适合(这也正是bigCache诞生的背景)。但是在业务逻辑中的海量操作都要经过序列化是不可接受的，会占用很多cpu资源，而非zero-gc就算gc会影响程序的性能，但是缓存项毕竟会淘汰不是无限的，再加上go现在的gc优化的也不错，所以权衡之下优先采用非Zero-GC库。</p>
+<ul>
+<li>数组(固定了指针数量) + map[uint64]uint32(非指针) + []byte(参考freecache) </li>
+<li>slice + 非指针的map + ringbuffer(参考bigcache)</li>
+</ul>
+<p><strong>如何选择？</strong></p>
+<ul>
+<li>读写性能要求? 比如ristretto底层依赖channel,Get很快，但是Set如果是同步模式，会较慢需要评估。</li>
+<li>gc敏感度, 需要压测看业务是否能接受。</li>
+<li>过期时间配置是否灵活，有些库甚至都不支持过期时间，不过这还得取决于使用场景需要自行评估。</li>
+<li>业务匹配度，比如大部分业务ristretto更适合，支持泛型、使用门槛低，不过有一定的gc压力；再比如apiCache场景，只是简单的取出缓存写socket，无序序列化，那更适合bigCache，不过bigCache读的时候存在内存拷贝，需要留意;</li>
+</ul>
 <p>综上，没有一个缓存库适用于所有场景和问题, 每个缓存库的诞生都是为了解决特定场景下的特定问题, 不过这些问题种类不多主要分为以下几类:</p>
 <ul>
 <li>锁竞争。全局锁导致大量请求都在抢锁、休眠，严重影响性能</li>
@@ -391,58 +401,177 @@
 <h3 id="高性能优化"><a href="#高性能优化" class="headerlink" title="高性能优化"></a>高性能优化</h3><h4 id="写操作"><a href="#写操作" class="headerlink" title="写操作"></a>写操作</h4><p><strong>隔离:</strong>  按channel隔离增、删、改<br><strong>同步转异步:</strong>  链表并发写操作，改为异步单协程更新<br><strong>支持非阻塞</strong></p>
 <h4 id="读操作"><a href="#读操作" class="headerlink" title="读操作"></a>读操作</h4><p><strong>批量操作:</strong> 采用ringbuffer，批量更新链表</p>
 <h4 id="内存优化"><a href="#内存优化" class="headerlink" title="内存优化"></a>内存优化</h4><p>采用sync.Pool池化ringbuffer对象，避免频繁创建对象</p>
-<h2 id="压测对比"><a href="#压测对比" class="headerlink" title="压测对比"></a>压测对比</h2><p><a target="_blank" rel="noopener" href="https://github.com/codingWhat/armory/tree/main/cache/localcache">代码地址</a></p>
+<h2 id="压测对比"><a href="#压测对比" class="headerlink" title="压测对比"></a>压测对比</h2><p><a target="_blank" rel="noopener" href="https://github.com/codingWhat/armory/tree/main/cache/localcache">代码地址</a><br>同步模式:</p>
 <table>
 <thead>
 <tr>
 <th>压测case</th>
 <th>操作次数</th>
-<th>单次耗时</th>
+<th>单次耗时 (ns&#x2F;op)</th>
+<th>内存分配 (B&#x2F;op)</th>
+<th>分配次数</th>
 </tr>
 </thead>
 <tbody><tr>
 <td>BenchmarkSyncMapSetParallelForStruct-10</td>
-<td>1330215</td>
-<td>907.6 ns&#x2F;op</td>
+<td>1,576,032</td>
+<td>719.3</td>
+<td>76</td>
+<td>5</td>
+</tr>
+<tr>
+<td><strong>BenchmarkRistrettoSetParallelForStruct-10</strong></td>
+<td>716,690</td>
+<td>1,642</td>
+<td>369</td>
+<td>11</td>
 </tr>
 <tr>
 <td>BenchmarkFreeCacheSetParallelForStruct-10</td>
-<td>2191702</td>
-<td>549.8 ns&#x2F;op</td>
+<td>2,122,884</td>
+<td>562.7</td>
+<td>61</td>
+<td>4</td>
 </tr>
 <tr>
 <td>BenchmarkBigCacheSetParallelForStruct-10</td>
-<td>2250765</td>
-<td>528.6 ns&#x2F;op</td>
+<td>2,206,600</td>
+<td>546.9</td>
+<td>200</td>
+<td>4</td>
 </tr>
 <tr>
 <td><strong>BenchmarkLCSetParallelForStruct-10</strong></td>
-<td>590721</td>
-<td>2114 ns&#x2F;op</td>
+<td>914,626</td>
+<td>1,279</td>
+<td>282</td>
+<td>9</td>
 </tr>
 <tr>
 <td>BenchmarkSyncMapGetParallelForStruct-10</td>
-<td>3960368</td>
-<td>313.6 ns&#x2F;op</td>
+<td>3,933,157</td>
+<td>305.5</td>
+<td>24</td>
+<td>1</td>
 </tr>
 <tr>
 <td>BenchmarkFreeCacheGetParallelForStruct-10</td>
-<td>2146406</td>
-<td>545.5 ns&#x2F;op</td>
+<td>2,159,518</td>
+<td>577.2</td>
+<td>263</td>
+<td>7</td>
 </tr>
 <tr>
 <td>BenchmarkBigCacheGetParallelForStruct-10</td>
-<td>2329698</td>
-<td>516.4 ns&#x2F;op</td>
+<td>2,218,573</td>
+<td>539.1</td>
+<td>279</td>
+<td>8</td>
+</tr>
+<tr>
+<td><strong>BenchmarkRistrettoGetParallelForStruct-10</strong></td>
+<td>3,195,711</td>
+<td>379.0</td>
+<td>31</td>
+<td>1</td>
 </tr>
 <tr>
 <td><strong>BenchmarkLCGetParallelForStruct-10</strong></td>
-<td>2386426</td>
-<td>475.1 ns&#x2F;op</td>
+<td>2,233,429</td>
+<td>530.5</td>
+<td>31</td>
+<td>2</td>
 </tr>
 </tbody></table>
-<p>经过压测分析，在写入数据由于我们采用的是同步模式，对比其他库有一些弱势，但是在读取时由于不需要序列化操作，相比Zero-Gc要快些。</p>
-<h2 id="未来展望"><a href="#未来展望" class="headerlink" title="未来展望"></a>未来展望</h2><p>从上述压测结果可以分析得出在高并发写场景下，跟其他主流库相比吞吐较低，主要原因是因为底层channel并发操作性能不佳，虽说本地缓存面向的是读多写少的场景，但如果有些场景对写的要求很高，可以用无锁队列替换。</p>
+<p>总结:</p>
+<ul>
+<li>读取性能: LC 和 SyncMap 在读取操作中表现最佳，具有较低的耗时和内存分配。</li>
+<li>写入性能: BigCache 和 FreeCache 在写入操作中表现较好，LC、Ristretto因为channel缘故，写入性能较差。</li>
+<li>内存效率: SyncMap&#x2F;Ristretto 在Get操作中的内存分配最低，FreeCache在Set操作中内存分配最低, 整体上syncMap占用最低。</li>
+</ul>
+<p>非同步模式:<br>读、写、耗时、内存分配逐渐接近主流库的, 但是写存在失败的概率，需要按场景权衡。</p>
+<table>
+<thead>
+<tr>
+<th>压测case</th>
+<th>操作次数</th>
+<th>单次耗时 (ns&#x2F;op)</th>
+<th>内存分配 (B&#x2F;op)</th>
+<th>分配次数 (allocs&#x2F;op)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>BenchmarkSyncMapSetParallelForStruct-10</td>
+<td>1256974</td>
+<td>958.8</td>
+<td>78</td>
+<td>5</td>
+</tr>
+<tr>
+<td><strong>BenchmarkRistrettoSetParallelForStruct-10</strong></td>
+<td>2372764</td>
+<td>505.6</td>
+<td>143</td>
+<td>4</td>
+</tr>
+<tr>
+<td>BenchmarkFreeCacheSetParallelForStruct-10</td>
+<td>2117694</td>
+<td>554.2</td>
+<td>61</td>
+<td>4</td>
+</tr>
+<tr>
+<td>BenchmarkBigCacheSetParallelForStruct-10</td>
+<td>2130927</td>
+<td>547.5</td>
+<td>206</td>
+<td>4</td>
+</tr>
+<tr>
+<td><strong>BenchmarkLCSetParallelForStruct-10</strong></td>
+<td>2115037</td>
+<td>567.1</td>
+<td>158</td>
+<td>6</td>
+</tr>
+<tr>
+<td>BenchmarkSyncMapGetParallelForStruct-10</td>
+<td>3854450</td>
+<td>305.2</td>
+<td>23</td>
+<td>1</td>
+</tr>
+<tr>
+<td>BenchmarkFreeCacheGetParallelForStruct-10</td>
+<td>2152428</td>
+<td>560.6</td>
+<td>263</td>
+<td>7</td>
+</tr>
+<tr>
+<td>BenchmarkBigCacheGetParallelForStruct-10</td>
+<td>2202607</td>
+<td>539.5</td>
+<td>279</td>
+<td>8</td>
+</tr>
+<tr>
+<td><strong>BenchmarkRistrettoGetParallelForStruct-10</strong></td>
+<td>3445798</td>
+<td>349.7</td>
+<td>31</td>
+<td>1</td>
+</tr>
+<tr>
+<td><strong>BenchmarkLCGetParallelForStruct-10</strong></td>
+<td>2453848</td>
+<td>505.4</td>
+<td>30</td>
+<td>2</td>
+</tr>
+</tbody></table>
+<h2 id="未来展望"><a href="#未来展望" class="headerlink" title="未来展望"></a>未来展望</h2><p>继续优化写场景下，临时对象的管理，减少耗时操作和频繁的内存申请。</p>
 
                 
               </div>
