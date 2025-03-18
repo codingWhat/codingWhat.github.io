@@ -34,3 +34,12 @@ tags:
 
 
 ## 实战
+```sql
+CREATE  TABLE  tbl_old (
+    id int(11) not null auto_increment primary key,
+    data varchar(20) not null,
+    created_at timestamp not null default current_timestamp,
+    updated_at timestamp not null default  current_timestamp on update
+)
+
+```

@@ -1,6 +1,6 @@
 ---
 title: go_nginx_502问题排查
-date: 2024-07-09 16:35:08
+date: 2022-07-09 16:35:08
 tags:
 - Go
 - Nginx
