@@ -27,19 +27,6 @@
   
   
   <entry>
-    <title>如何优雅迁移数据</title>
-    <link href="/2024/10/23/how-to-migrate-data/"/>
-    <url>/2024/10/23/how-to-migrate-data/</url>
-    
-    <content type="html"><![CDATA[<h2 id="数据迁移的背景"><a href="#数据迁移的背景" class="headerlink" title="数据迁移的背景"></a>数据迁移的背景</h2><p>基本上数据迁移无外乎如下原因</p><ul><li>业务增长</li><li>降本增效</li></ul><p>常见迁移的策略有如下两种方式</p><ol><li>停机迁移</li><li>不停机迁移</li></ol><p>像金融场景会采用第一种，一般会提前发布公告，在迁移期间服务不可用。<br>而大部分互联网的场景更倾向于采用不停机的优雅迁移策略。</p><h2 id="迁移时机"><a href="#迁移时机" class="headerlink" title="迁移时机"></a>迁移时机</h2><ul><li>已在测试环境模拟完毕</li><li>凌晨, 数据量少</li></ul><h2 id="迁移阶段"><a href="#迁移阶段" class="headerlink" title="迁移阶段"></a>迁移阶段</h2><ul><li>全量拷贝(mysqldump&#x2F;XtraBackup, redis-shake)</li><li>写旧、读旧</li><li>先写旧再写新，读旧(异步diff检测)</li><li>先写新再写旧，读新(异步diff检测)</li><li>写新、读新</li></ul><h2 id="全量拷贝"><a href="#全量拷贝" class="headerlink" title="全量拷贝"></a>全量拷贝</h2><h2 id="校准和修复逻辑"><a href="#校准和修复逻辑" class="headerlink" title="校准和修复逻辑"></a>校准和修复逻辑</h2><h2 id="实战"><a href="#实战" class="headerlink" title="实战"></a>实战</h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">CREATE</span>  <span class="hljs-keyword">TABLE</span>  tbl_old (<br>    id <span class="hljs-type">int</span>(<span class="hljs-number">11</span>) <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span> auto_increment <span class="hljs-keyword">primary</span> key,<br>    data <span class="hljs-type">varchar</span>(<span class="hljs-number">20</span>) <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>    created_at <span class="hljs-type">timestamp</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span> <span class="hljs-keyword">default</span> <span class="hljs-built_in">current_timestamp</span>,<br>    updated_at <span class="hljs-type">timestamp</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span> <span class="hljs-keyword">default</span>  <span class="hljs-built_in">current_timestamp</span> <span class="hljs-keyword">on</span> <span class="hljs-keyword">update</span><br>)<br><br></code></pre></td></tr></table></figure>]]></content>
-    
-    
-    
-  </entry>
-  
-  
-  
-  <entry>
     <title>实现高性能的本地缓存库</title>
     <link href="/2024/08/05/local-cache-go-impl/"/>
     <url>/2024/08/05/local-cache-go-impl/</url>
@@ -228,6 +215,19 @@
       <tag>逃逸分析</tag>
       
     </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>如何优雅迁移数据</title>
+    <link href="/2022/10/23/how-to-migrate-data/"/>
+    <url>/2022/10/23/how-to-migrate-data/</url>
+    
+    <content type="html"><![CDATA[<h2 id="数据迁移的背景"><a href="#数据迁移的背景" class="headerlink" title="数据迁移的背景"></a>数据迁移的背景</h2><p>基本上数据迁移无外乎如下原因</p><ul><li>业务增长</li><li>降本增效</li></ul><p>常见迁移的策略有如下两种方式</p><ol><li>停机迁移</li><li>不停机迁移</li></ol><p>像金融场景会采用第一种，一般会提前发布公告，在迁移期间服务不可用。<br>而大部分互联网的场景更倾向于采用不停机的优雅迁移策略。</p><h2 id="迁移时机"><a href="#迁移时机" class="headerlink" title="迁移时机"></a>迁移时机</h2><ul><li>已在测试环境模拟完毕</li><li>凌晨, 数据量少</li></ul><h2 id="迁移阶段"><a href="#迁移阶段" class="headerlink" title="迁移阶段"></a>迁移阶段</h2><ul><li>全量拷贝(mysqldump&#x2F;XtraBackup, redis-shake)</li><li>写旧、读旧</li><li>先写旧再写新，读旧(异步diff检测)</li><li>先写新再写旧，读新(异步diff检测)</li><li>写新、读新</li></ul><h2 id="全量拷贝"><a href="#全量拷贝" class="headerlink" title="全量拷贝"></a>全量拷贝</h2><h2 id="校准和修复逻辑"><a href="#校准和修复逻辑" class="headerlink" title="校准和修复逻辑"></a>校准和修复逻辑</h2><h2 id="实战"><a href="#实战" class="headerlink" title="实战"></a>实战</h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">CREATE</span>  <span class="hljs-keyword">TABLE</span>  tbl_old (<br>    id <span class="hljs-type">int</span>(<span class="hljs-number">11</span>) <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span> auto_increment <span class="hljs-keyword">primary</span> key,<br>    data <span class="hljs-type">varchar</span>(<span class="hljs-number">20</span>) <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>    created_at <span class="hljs-type">timestamp</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span> <span class="hljs-keyword">default</span> <span class="hljs-built_in">current_timestamp</span>,<br>    updated_at <span class="hljs-type">timestamp</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span> <span class="hljs-keyword">default</span>  <span class="hljs-built_in">current_timestamp</span> <span class="hljs-keyword">on</span> <span class="hljs-keyword">update</span><br>)<br><br></code></pre></td></tr></table></figure>]]></content>
+    
+    
     
   </entry>
   
