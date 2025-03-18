@@ -19,15 +19,15 @@
     <meta name="description" content="本文假设读者了解Go内存空间、堆栈等基础概念，若具备一定的go使用经验最佳">
 <meta property="og:type" content="article">
 <meta property="og:title" content="go内存优化分析思路">
-<meta property="og:url" content="http://codingwhat.github.io/2024/12/18/go-mem-optimize-thought/index.html">
+<meta property="og:url" content="http://codingwhat.github.io/2022/12/18/go-mem-optimize-thought/index.html">
 <meta property="og:site_name" content="codingWhat Blog">
 <meta property="og:description" content="本文假设读者了解Go内存空间、堆栈等基础概念，若具备一定的go使用经验最佳">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://codingwhat.github.io/images/go_mem_escape.png">
 <meta property="og:image" content="http://codingwhat.github.io/images/gc_mutator.png">
 <meta property="og:image" content="http://codingwhat.github.io/images/memory_limit.png">
-<meta property="article:published_time" content="2024-12-18T08:01:01.000Z">
-<meta property="article:modified_time" content="2024-12-20T03:25:03.681Z">
+<meta property="article:published_time" content="2022-12-18T08:01:01.000Z">
+<meta property="article:modified_time" content="2025-03-18T01:27:22.950Z">
 <meta property="article:author" content="codingWhat">
 <meta property="article:tag" content="GO">
 <meta property="article:tag" content="memory">
@@ -244,8 +244,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2024-12-18 16:01" pubdate>
-          2024年12月18日 下午
+        <time datetime="2022-12-18 16:01" pubdate>
+          2022年12月18日 下午
         </time>
       </span>
     
@@ -323,7 +323,7 @@
 <span id="more"></span>
 
 <h1 id="优化原则"><a href="#优化原则" class="headerlink" title="优化原则"></a>优化原则</h1><ul>
-<li>切勿过早优化！！！！</li>
+<li>切勿过早优化</li>
 <li>善用语言分析工具</li>
 </ul>
 <h1 id="优化思路？"><a href="#优化思路？" class="headerlink" title="优化思路？"></a>优化思路？</h1><p>内存优化的目标就是把<span style="color: red;">不合理的、冗余、低效</span>的内存使用逻辑变成<span style="color: green;">合理、紧凑、高效的</span></p>
@@ -463,7 +463,7 @@
   <div class="license-box my-3">
     <div class="license-title">
       <div>go内存优化分析思路</div>
-      <div>http://codingwhat.github.io/2024/12/18/go-mem-optimize-thought/</div>
+      <div>http://codingwhat.github.io/2022/12/18/go-mem-optimize-thought/</div>
     </div>
     <div class="license-meta">
       
@@ -475,7 +475,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2024年12月18日</div>
+          <div>2022年12月18日</div>
         </div>
       
       
@@ -507,9 +507,9 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2024/12/19/rwmutex-deadlock/" title="golang读锁导致的死锁问题分析">
+                      <a href="/2023/08/09/gmp-understanding/" title="GMP学习总结">
                         <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">golang读锁导致的死锁问题分析</span>
+                        <span class="hidden-mobile">GMP学习总结</span>
                         <span class="visible-mobile">上一篇</span>
                       </a>
                     
@@ -517,8 +517,8 @@
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2024/10/23/how-to-migrate-data/" title="如何优雅迁移数据">
-                        <span class="hidden-mobile">如何优雅迁移数据</span>
+                      <a href="/2022/07/09/go-nginx-502/" title="go_nginx_502问题排查">
+                        <span class="hidden-mobile">go_nginx_502问题排查</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
