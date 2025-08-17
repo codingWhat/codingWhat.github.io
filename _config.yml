@@ -98,7 +98,8 @@ ignore:
 ## Themes: https://hexo.io/themes/
 #theme: landscape
 #theme: next
-theme: fluid
+#theme: fluid
+theme: butterfly
 
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment

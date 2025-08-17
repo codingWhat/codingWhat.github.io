@@ -1,330 +1,167 @@
-
-
-<!DOCTYPE html>
-<html lang="zh-CN" data-default-color-scheme=auto>
-
-
-
-<head>
-  <meta charset="UTF-8">
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
-  <link rel="icon" href="/img/fluid.png">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
-  <meta http-equiv="x-ua-compatible" content="ie=edge">
-  
-  <meta name="theme-color" content="#2f4154">
-  <meta name="author" content="codingWhat">
-  <meta name="keywords" content="evanhan codingWhat 博客 韩伟的博客 系统设计 后端开发">
-  
-    <meta name="description" content="调度器发展历程Go语言调度器的核心职责是通过高效的线程复用机制来执行大量的Goroutine。当前的GMP模型是经过多次迭代优化的结果。 早期GM模型的限制早期调度器采用GM二元模型，存在以下性能瓶颈：  全局锁竞争：所有M（Machine）竞争同一个全局运行队列，随着Goroutine数量增长，锁竞争愈发严重 CPU利用率低：M执行系统调用或阻塞操作时会休眠，绑定在该M上的Goroutine无法">
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Go语言GMP调度器深度解析 | codingWhat Blog</title><meta name="author" content="codingWhat"><meta name="copyright" content="codingWhat"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="调度器发展历程Go语言调度器的核心职责是通过高效的线程复用机制来执行大量的Goroutine。当前的GMP模型是经过多次迭代优化的结果。 早期GM模型的限制早期调度器采用GM二元模型，存在以下性能瓶颈：  全局锁竞争：所有M（Machine）竞争同一个全局运行队列，随着Goroutine数量增长，锁竞争愈发严重 CPU利用率低：M执行系统调用或阻塞操作时会休眠，绑定在该M上的Goroutine无法">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Go语言GMP调度器深度解析">
 <meta property="og:url" content="http://codingwhat.github.io/2023/08/09/gmp-understanding/index.html">
 <meta property="og:site_name" content="codingWhat Blog">
 <meta property="og:description" content="调度器发展历程Go语言调度器的核心职责是通过高效的线程复用机制来执行大量的Goroutine。当前的GMP模型是经过多次迭代优化的结果。 早期GM模型的限制早期调度器采用GM二元模型，存在以下性能瓶颈：  全局锁竞争：所有M（Machine）竞争同一个全局运行队列，随着Goroutine数量增长，锁竞争愈发严重 CPU利用率低：M执行系统调用或阻塞操作时会休眠，绑定在该M上的Goroutine无法">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://codingwhat.github.io/images/gmp_p_status.png">
-<meta property="og:image" content="http://codingwhat.github.io/images/g_status.png">
-<meta property="og:image" content="http://codingwhat.github.io/images/g0-p0-m0.png">
-<meta property="og:image" content="http://codingwhat.github.io/images/g_to_p.png">
-<meta property="og:image" content="http://codingwhat.github.io/images/gmp_global_runq_random.png">
-<meta property="og:image" content="http://codingwhat.github.io/images/gmp_local_runq.png">
-<meta property="og:image" content="http://codingwhat.github.io/images/get_from_global_runq.png">
-<meta property="og:image" content="http://codingwhat.github.io/images/get_form_netpoll.png">
-<meta property="og:image" content="http://codingwhat.github.io/images/steal_from_other_p.png">
-<meta property="og:image" content="http://codingwhat.github.io/images/stealwork.png">
-<meta property="og:image" content="http://codingwhat.github.io/images/coop_vs_retake.png">
+<meta property="og:image" content="http://codingwhat.github.io/img/butterfly-icon.png">
 <meta property="article:published_time" content="2023-08-09T05:27:45.000Z">
 <meta property="article:modified_time" content="2025-08-17T12:53:23.249Z">
 <meta property="article:author" content="codingWhat">
 <meta property="article:tag" content="GO">
 <meta property="article:tag" content="GO-GMP">
 <meta property="article:tag" content="Go调度原理">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="http://codingwhat.github.io/images/gmp_p_status.png">
-  
-  
-  
-  <title>Go语言GMP调度器深度解析 - codingWhat Blog</title>
-
-  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
-
-
-
-  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
-
-  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
-
-  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
-
-
-
-<!-- 主题依赖的图标库，不要自行修改 -->
-<!-- Do not modify the link that theme dependent icons -->
-
-<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
-
-
-
-<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
-
-
-<link  rel="stylesheet" href="/css/main.css" />
-
-
-  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
-  
-    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
-  
-
-
-
-
-  <script id="fluid-configs">
-    var Fluid = window.Fluid || {};
-    Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"codingwhat.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"bp8GoUBWrJcqrTcWZR7ark7W-gzGzoHsz","app_key":"72QDRB9uHrgahwILCMXUBqo7","server_url":"https://bp8goubw.lc-cn-n1-shared.com","path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
-
-    if (CONFIG.web_analytics.follow_dnt) {
-      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
-      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://codingwhat.github.io/img/butterfly-icon.png"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Go语言GMP调度器深度解析",
+  "url": "http://codingwhat.github.io/2023/08/09/gmp-understanding/",
+  "image": "http://codingwhat.github.io/img/butterfly-icon.png",
+  "datePublished": "2023-08-09T05:27:45.000Z",
+  "dateModified": "2025-08-17T12:53:23.249Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "codingWhat",
+      "url": "http://codingWhat.github.io"
     }
-  </script>
-  <script  src="/js/utils.js" ></script>
-  <script  src="/js/color-schema.js" ></script>
-  
-
-  
-
-  
-    <!-- Google tag (gtag.js) -->
-    <script async>
-      if (!Fluid.ctx.dnt) {
-        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=", function() {
-          window.dataLayer = window.dataLayer || [];
-          function gtag() {
-            dataLayer.push(arguments);
-          }
-          gtag('js', new Date());
-          gtag('config', '');
-        });
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="http://codingwhat.github.io/2023/08/09/gmp-understanding/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
       }
-    </script>
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
   
-
-  
-
-  
-
-  
-
-  
-    
-  
-
-
-
-  
-<meta name="generator" content="Hexo 7.3.0"></head>
-
-
-<body>
-  
-
-  <header>
-    
-
-<div class="header-inner" style="height: 70vh;">
-  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
-  <div class="container">
-    <a class="navbar-brand" href="/">
-      <strong>Coding What Blog</strong>
-    </a>
-
-    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
-            data-target="#navbarSupportedContent"
-            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-      <div class="animated-icon"><span></span><span></span><span></span></div>
-    </button>
-
-    <!-- Collapsible content -->
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav ml-auto text-center">
-        
-          
-          
-          
-          
-            <li class="nav-item">
-              <a class="nav-link" href="/" target="_self">
-                <i class="iconfont icon-home-fill"></i>
-                <span>首页</span>
-              </a>
-            </li>
-          
-        
-          
-          
-          
-          
-            <li class="nav-item">
-              <a class="nav-link" href="/archives/" target="_self">
-                <i class="iconfont icon-archive-fill"></i>
-                <span>归档</span>
-              </a>
-            </li>
-          
-        
-          
-          
-          
-          
-            <li class="nav-item">
-              <a class="nav-link" href="/categories/" target="_self">
-                <i class="iconfont icon-category-fill"></i>
-                <span>分类</span>
-              </a>
-            </li>
-          
-        
-          
-          
-          
-          
-            <li class="nav-item">
-              <a class="nav-link" href="/tags/" target="_self">
-                <i class="iconfont icon-tags-fill"></i>
-                <span>标签</span>
-              </a>
-            </li>
-          
-        
-          
-          
-          
-          
-            <li class="nav-item">
-              <a class="nav-link" href="/about/" target="_self">
-                <i class="iconfont icon-user-fill"></i>
-                <span>关于</span>
-              </a>
-            </li>
-          
-        
-        
-          <li class="nav-item" id="search-btn">
-            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
-              <i class="iconfont icon-search"></i>
-            </a>
-          </li>
-          
-        
-        
-          <li class="nav-item" id="color-toggle-btn">
-            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
-              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
-            </a>
-          </li>
-        
-      </ul>
-    </div>
-  </div>
-</nav>
-
-  
-
-<div id="banner" class="banner" parallax=true
-     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
-  <div class="full-bg-img">
-    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
-      <div class="banner-text text-center fade-in-up">
-        <div class="h2">
-          
-            <span id="subtitle" data-typed-text="Go语言GMP调度器深度解析"></span>
-          
-        </div>
-
-        
-          
-  <div class="mt-3">
-    
-    
-      <span class="post-meta">
-        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2023-08-09 13:27" pubdate>
-          2023年8月9日 下午
-        </time>
-      </span>
-    
-  </div>
-
-  <div class="mt-1">
-    
-      <span class="post-meta mr-2">
-        <i class="iconfont icon-chart"></i>
-        
-          3.9k 字
-        
-      </span>
-    
-
-    
-      <span class="post-meta mr-2">
-        <i class="iconfont icon-clock-fill"></i>
-        
-        
-        
-          33 分钟
-        
-      </span>
-    
-
-    
-    
       
-        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
-          <i class="iconfont icon-eye" aria-hidden="true"></i>
-          <span id="leancloud-page-views"></span> 次
-        </span>
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
         
       
-    
-  </div>
-
-
-        
-      </div>
-
-      
-    </div>
-  </div>
-</div>
-
-</div>
-
-  </header>
-
-  <main>
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
     
       
-
-<div class="container-fluid nopadding-x">
-  <div class="row nomargin-x">
-    <div class="side-col d-none d-lg-block col-lg-2">
-      
-
-    </div>
-
-    <div class="col-lg-8 nopadding-x-md">
-      <div class="container nopadding-x-md" id="board-ctn">
-        <div id="board">
-          <article class="post-content mx-auto">
-            <h1 id="seo-header">Go语言GMP调度器深度解析</h1>
-            
-            
-              <div class="markdown-body">
-                
-                <h2 id="调度器发展历程"><a href="#调度器发展历程" class="headerlink" title="调度器发展历程"></a>调度器发展历程</h2><p>Go语言调度器的核心职责是通过高效的线程复用机制来执行大量的Goroutine。当前的GMP模型是经过多次迭代优化的结果。</p>
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":300,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Go语言GMP调度器深度解析',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/butterfly-icon.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">12</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">43</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/images/tech-bg.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">codingWhat Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Go语言GMP调度器深度解析</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Go语言GMP调度器深度解析</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2023-08-09T05:27:45.000Z" title="发表于 2023-08-09 13:27:45">2023-08-09</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-08-17T12:53:23.249Z" title="更新于 2025-08-17 20:53:23">2025-08-17</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="调度器发展历程"><a href="#调度器发展历程" class="headerlink" title="调度器发展历程"></a>调度器发展历程</h2><p>Go语言调度器的核心职责是通过高效的线程复用机制来执行大量的Goroutine。当前的GMP模型是经过多次迭代优化的结果。</p>
 <h3 id="早期GM模型的限制"><a href="#早期GM模型的限制" class="headerlink" title="早期GM模型的限制"></a>早期GM模型的限制</h3><p>早期调度器采用GM二元模型，存在以下性能瓶颈：</p>
 <ol>
 <li><strong>全局锁竞争</strong>：所有M（Machine）竞争同一个全局运行队列，随着Goroutine数量增长，锁竞争愈发严重</li>
@@ -351,7 +188,7 @@
 <li><code>_Pgcstop</code>：GC停止状态，暂停调度等待GC完成</li>
 <li><code>_Pdead</code>：死亡状态，P被销毁</li>
 </ul>
-<p><img src="/images/gmp_p_status.png" srcset="/img/loading.gif" lazyload alt="gmp_p_status"></p>
+<p><img src="/images/gmp_p_status.png" alt="gmp_p_status"></p>
 <h3 id="Goroutine-G"><a href="#Goroutine-G" class="headerlink" title="Goroutine (G)"></a>Goroutine (G)</h3><p>Goroutine是Go语言的用户级线程，具有轻量级和高并发特性。</p>
 <h4 id="基本状态模型"><a href="#基本状态模型" class="headerlink" title="基本状态模型"></a>基本状态模型</h4><p>从调度器角度，Goroutine具有三种核心状态：</p>
 <ul>
@@ -374,7 +211,7 @@
 <li>状态从<code>_Grunning</code>更新为<code>_Gdead</code></li>
 <li>回收到空闲Goroutine池</li>
 </ol>
-<p><img src="/images/g_status.png" srcset="/img/loading.gif" lazyload alt="g_status"></p>
+<p><img src="/images/g_status.png" alt="g_status"></p>
 <h3 id="特殊对象与全局管理"><a href="#特殊对象与全局管理" class="headerlink" title="特殊对象与全局管理"></a>特殊对象与全局管理</h3><h4 id="系统初始对象"><a href="#系统初始对象" class="headerlink" title="系统初始对象"></a>系统初始对象</h4><ul>
 <li><p><strong>M0</strong>：主线程对应的Machine，存储在全局变量<code>runtime.m0</code>中</p>
 <ul>
@@ -406,7 +243,7 @@
 </ul>
 </li>
 </ul>
-<p><img src="/images/g0-p0-m0.png" srcset="/img/loading.gif" lazyload alt="g0-p0-m0"></p>
+<p><img src="/images/g0-p0-m0.png" alt="g0-p0-m0"></p>
 <h2 id="GMP调度机制详解"><a href="#GMP调度机制详解" class="headerlink" title="GMP调度机制详解"></a>GMP调度机制详解</h2><h3 id="系统启动流程"><a href="#系统启动流程" class="headerlink" title="系统启动流程"></a>系统启动流程</h3><p>Go程序启动时按以下步骤初始化调度器：</p>
 <ol>
 <li><strong>M0和G0初始化</strong>：创建主线程M0及其调度Goroutine G0</li>
@@ -434,9 +271,9 @@
 <li>被抢占的Goroutine与<code>runq</code>前半部分（128个）一起转移到全局队列</li>
 <li>这种设计平衡了本地调度效率和全局负载均衡</li>
 </ol>
-<p><img src="/images/g_to_p.png" srcset="/img/loading.gif" lazyload alt="Goroutine和P交互细节"></p>
+<p><img src="/images/g_to_p.png" alt="Goroutine和P交互细节"></p>
 <h4 id="创建流程"><a href="#创建流程" class="headerlink" title="创建流程"></a>创建流程</h4><p>Goroutine创建通过以下调用链完成：</p>
-<figure class="highlight livescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs livescript">go func<span class="hljs-function"><span class="hljs-params">()</span> -&gt;</span> newproc<span class="hljs-function"><span class="hljs-params">()</span> -&gt;</span> runqput<span class="hljs-function"><span class="hljs-params">()</span> -&gt;</span> P.runnext/runq<br></code></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">go func() -&gt; newproc() -&gt; runqput() -&gt; P.runnext/runq</span><br></pre></td></tr></table></figure>
 
 
 <h3 id="Goroutine调度策略"><a href="#Goroutine调度策略" class="headerlink" title="Goroutine调度策略"></a>Goroutine调度策略</h3><p>调度器核心逻辑位于<code>runtime/proc.go</code>的<code>schedule()</code>→<code>findRunnable()</code>方法，采用多级调度策略：</p>
@@ -453,16 +290,16 @@
 <li>当<code>SchedTick % 61 == 0</code>时，强制优先调度全局队列</li>
 <li>该机制确保全局队列中的Goroutine最多等待61个调度周期</li>
 </ul>
-<h4 id="调度流程图解"><a href="#调度流程图解" class="headerlink" title="调度流程图解"></a>调度流程图解</h4><p><img src="/images/gmp_global_runq_random.png" srcset="/img/loading.gif" lazyload alt="gmp_global_runq_probability"><br><img src="/images/gmp_local_runq.png" srcset="/img/loading.gif" lazyload alt="get from local runq"><br><img src="/images/get_from_global_runq.png" srcset="/img/loading.gif" lazyload alt="get_from_global_runq"><br><img src="/images/get_form_netpoll.png" srcset="/img/loading.gif" lazyload alt="get_form_netpoll"><br><img src="/images/steal_from_other_p.png" srcset="/img/loading.gif" lazyload alt="steal_from_other_p"></p>
+<h4 id="调度流程图解"><a href="#调度流程图解" class="headerlink" title="调度流程图解"></a>调度流程图解</h4><p><img src="/images/gmp_global_runq_random.png" alt="gmp_global_runq_probability"><br><img src="/images/gmp_local_runq.png" alt="get from local runq"><br><img src="/images/get_from_global_runq.png" alt="get_from_global_runq"><br><img src="/images/get_form_netpoll.png" alt="get_form_netpoll"><br><img src="/images/steal_from_other_p.png" alt="steal_from_other_p"></p>
 <h3 id="Work-Stealing负载均衡机制"><a href="#Work-Stealing负载均衡机制" class="headerlink" title="Work-Stealing负载均衡机制"></a>Work-Stealing负载均衡机制</h3><p>当P的本地队列为空且全局队列也无可用Goroutine时，启动Work-Stealing机制实现动态负载均衡。</p>
 <h4 id="偷取策略"><a href="#偷取策略" class="headerlink" title="偷取策略"></a>偷取策略</h4><ul>
 <li><strong>随机选择</strong>：最多尝试4次，每次随机选择一个目标P</li>
 <li><strong>适应性偷取</strong>：优先从繁忙的P偷取，避免影响轻载P</li>
 <li><strong>批量转移</strong>：一次偷取目标P队列的一半，减少偷取频率</li>
 </ul>
-<p><img src="/images/stealwork.png" srcset="/img/loading.gif" lazyload alt="stealwork"></p>
+<p><img src="/images/stealwork.png" alt="stealwork"></p>
 <h4 id="核心算法：runqgrab"><a href="#核心算法：runqgrab" class="headerlink" title="核心算法：runqgrab"></a>核心算法：runqgrab</h4><p>Work-Stealing的关键实现是<code>runqgrab</code>函数，采用无锁并发算法：</p>
-<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs golang"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">runqgrab</span><span class="hljs-params">(pp *p, batch *[256]guintptr, batchHead <span class="hljs-type">uint32</span>, stealRunNextG <span class="hljs-type">bool</span>)</span></span> <span class="hljs-type">uint32</span> &#123;<br>    <span class="hljs-keyword">for</span> &#123;<br>        <span class="hljs-comment">// 原子读取队列头尾指针，确保内存可见性</span><br>        h := atomic.LoadAcq(&amp;pp.runqhead) <span class="hljs-comment">// 消费者同步点</span><br>        t := atomic.LoadAcq(&amp;pp.runqtail) <span class="hljs-comment">// 生产者同步点</span><br>        <br>        <span class="hljs-comment">// 计算待偷取数量（队列一半）</span><br>        n := t - h<br>        n = n - n/<span class="hljs-number">2</span><br>        <br>        <span class="hljs-comment">// 批量复制Goroutine到偷取者队列</span><br>        <span class="hljs-keyword">for</span> i := <span class="hljs-type">uint32</span>(<span class="hljs-number">0</span>); i &lt; n; i++ &#123;<br>            g := pp.runq[(h+i)%<span class="hljs-type">uint32</span>(<span class="hljs-built_in">len</span>(pp.runq))]<br>            batch[(batchHead+i)%<span class="hljs-type">uint32</span>(<span class="hljs-built_in">len</span>(batch))] = g<br>        &#125;<br>        <br>        <span class="hljs-comment">// CAS原子更新头指针，提交偷取操作</span><br>        <span class="hljs-keyword">if</span> atomic.CasRel(&amp;pp.runqhead, h, h+n) &#123;<br>            <span class="hljs-keyword">return</span> n<br>        &#125;<br>        <span class="hljs-comment">// CAS失败说明发生竞争，重试</span><br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">runqgrab</span><span class="params">(pp *p, batch *[256]guintptr, batchHead <span class="type">uint32</span>, stealRunNextG <span class="type">bool</span>)</span></span> <span class="type">uint32</span> &#123;</span><br><span class="line">    <span class="keyword">for</span> &#123;</span><br><span class="line">        <span class="comment">// 原子读取队列头尾指针，确保内存可见性</span></span><br><span class="line">        h := atomic.LoadAcq(&amp;pp.runqhead) <span class="comment">// 消费者同步点</span></span><br><span class="line">        t := atomic.LoadAcq(&amp;pp.runqtail) <span class="comment">// 生产者同步点</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 计算待偷取数量（队列一半）</span></span><br><span class="line">        n := t - h</span><br><span class="line">        n = n - n/<span class="number">2</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 批量复制Goroutine到偷取者队列</span></span><br><span class="line">        <span class="keyword">for</span> i := <span class="type">uint32</span>(<span class="number">0</span>); i &lt; n; i++ &#123;</span><br><span class="line">            g := pp.runq[(h+i)%<span class="type">uint32</span>(<span class="built_in">len</span>(pp.runq))]</span><br><span class="line">            batch[(batchHead+i)%<span class="type">uint32</span>(<span class="built_in">len</span>(batch))] = g</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// CAS原子更新头指针，提交偷取操作</span></span><br><span class="line">        <span class="keyword">if</span> atomic.CasRel(&amp;pp.runqhead, h, h+n) &#123;</span><br><span class="line">            <span class="keyword">return</span> n</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// CAS失败说明发生竞争，重试</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <h4 id="算法特点"><a href="#算法特点" class="headerlink" title="算法特点"></a>算法特点</h4><ol>
 <li><strong>无锁设计</strong>：使用原子操作和CAS避免锁竞争</li>
@@ -485,7 +322,7 @@
 <li>优点：保证调度公平性，防止饥饿问题</li>
 <li>缺点：频繁中断增加调度开销</li>
 </ul>
-<p><img src="/images/coop_vs_retake.png" srcset="/img/loading.gif" lazyload alt="coop_vs_retake"></p>
+<p><img src="/images/coop_vs_retake.png" alt="coop_vs_retake"></p>
 <h3 id="性能特征分析"><a href="#性能特征分析" class="headerlink" title="性能特征分析"></a>性能特征分析</h3><ol>
 <li><strong>执行延迟</strong>：协作式调度下短任务执行延迟更低</li>
 <li><strong>抢占频率</strong>：抢占式调度中断次数较多，增加调度开销  </li>
@@ -522,7 +359,7 @@
 <li>调用<code>handoffp()</code>将P移交给其他M</li>
 <li>原M继续执行系统调用，P可立即投入调度</li>
 </ol>
-<h4 id="关键源码实现"><a href="#关键源码实现" class="headerlink" title="关键源码实现"></a>关键源码实现</h4><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br></pre></td><td class="code"><pre><code class="hljs golang"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">retake</span><span class="hljs-params">(now <span class="hljs-type">int64</span>)</span></span> <span class="hljs-type">uint32</span> &#123;<br>    n := <span class="hljs-number">0</span><br>    lock(&amp;allpLock)<br>    <span class="hljs-comment">// 遍历所有的P</span><br>    <span class="hljs-keyword">for</span> i := <span class="hljs-type">int32</span>(<span class="hljs-number">0</span>); i &lt; gomaxprocs; i++ &#123;<br>        _p_ := allp[i]<br>        <span class="hljs-keyword">if</span> _p_ == <span class="hljs-literal">nil</span> &#123;<br>            <span class="hljs-keyword">continue</span><br>        &#125;<br>        <span class="hljs-comment">// 用于sysmon线程记录被监控P的系统调用时间和运行时间</span><br>        pd := &amp;_p_.sysmontick<br>        s := _p_.status<br>        sysretake := <span class="hljs-literal">false</span><br>        <br>        <span class="hljs-keyword">if</span> s == _Prunning || s == _Psyscall &#123;<br>            <span class="hljs-comment">// P处于运行状态，检查是否运行得太久了</span><br>            t := <span class="hljs-type">int64</span>(_p_.schedtick)<br>            <span class="hljs-keyword">if</span> <span class="hljs-type">int64</span>(pd.schedtick) != t &#123;<br>                pd.schedtick = <span class="hljs-type">uint32</span>(t)<br>                pd.schedwhen = now<br>            &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> pd.schedwhen+forcePreemptNS &lt;= now &#123;<br>                <span class="hljs-comment">// pd.schedtick == t 说明这段时间未发生过调度</span><br>                <span class="hljs-comment">// 同一个goroutine一直在运行，检查是否连续运行超过了10ms</span><br>                preemptone(_p_)<br>                sysretake = <span class="hljs-literal">true</span><br>            &#125;<br>        &#125;<br>        <br>        <span class="hljs-keyword">if</span> s == _Psyscall &#123;<br>            <span class="hljs-comment">// 系统调用状态的特殊处理</span><br>            t := <span class="hljs-type">int64</span>(_p_.syscalltick)<br>            <span class="hljs-keyword">if</span> !sysretake &amp;&amp; <span class="hljs-type">int64</span>(pd.syscalltick) != t &#123;<br>                pd.syscalltick = <span class="hljs-type">uint32</span>(t)<br>                pd.syscallwhen = now<br>                <span class="hljs-keyword">continue</span><br>            &#125;<br>            <br>            <span class="hljs-comment">// 满足以下条件之一则抢占该P：</span><br>            <span class="hljs-comment">// 1. P的运行队列里面有等待运行的goroutine</span><br>            <span class="hljs-comment">// 2. 没有空闲的P</span><br>            <span class="hljs-comment">// 3. 系统调用时间超过10ms</span><br>            <span class="hljs-keyword">if</span> runqempty(_p_) &amp;&amp; atomic.Load(&amp;sched.nmspinning)+atomic.Load(&amp;sched.npidle) &gt; <span class="hljs-number">0</span> &amp;&amp; <br>               pd.syscallwhen+<span class="hljs-number">10</span>*<span class="hljs-number">1000</span>*<span class="hljs-number">1000</span> &gt; now &#123;<br>                <span class="hljs-keyword">continue</span><br>            &#125;<br>            <br>            unlock(&amp;allpLock)<br>            incidlelocked(<span class="hljs-number">-1</span>)<br>            <span class="hljs-keyword">if</span> atomic.Cas(&amp;_p_.status, s, _Pidle) &#123;<br>                <span class="hljs-keyword">if</span> trace.enabled &#123;<br>                    traceGoSysBlock(_p_)<br>                    traceProcStop(_p_)<br>                &#125;<br>                n++<br>                _p_.syscalltick++<br>                <span class="hljs-comment">// 寻找新的M接管P</span><br>                handoffp(_p_)<br>            &#125;<br>            incidlelocked(<span class="hljs-number">1</span>)<br>            lock(&amp;allpLock)<br>        &#125;<br>    &#125;<br>    unlock(&amp;allpLock)<br>    <span class="hljs-keyword">return</span> <span class="hljs-type">uint32</span>(n)<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">preemptone</span><span class="hljs-params">(_p_ *p)</span></span> <span class="hljs-type">bool</span> &#123;<br>    mp := _p_.m.ptr()<br>    <span class="hljs-keyword">if</span> mp == <span class="hljs-literal">nil</span> || mp == getg().m &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span><br>    &#125;<br>    gp := mp.curg<br>    <span class="hljs-keyword">if</span> gp == <span class="hljs-literal">nil</span> || gp == mp.g0 &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span><br>    &#125;<br>    <br>    gp.preempt = <span class="hljs-literal">true</span><br>    <br>    <span class="hljs-comment">// 设置抢占标志：将stackguard0设置为stackPreempt</span><br>    <span class="hljs-comment">// 每次goroutine函数调用都会检查栈溢出，通过这种方式实现抢占检查</span><br>    gp.stackguard0 = stackPreempt<br>    <br>    <span class="hljs-comment">// 如果支持异步抢占，发送抢占信号</span><br>    <span class="hljs-keyword">if</span> preemptMSupported &amp;&amp; debug.asyncpreemptoff == <span class="hljs-number">0</span> &#123;<br>        _p_.preempt = <span class="hljs-literal">true</span><br>        preemptM(mp)<br>    &#125;<br>    <br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<h4 id="关键源码实现"><a href="#关键源码实现" class="headerlink" title="关键源码实现"></a>关键源码实现</h4><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">retake</span><span class="params">(now <span class="type">int64</span>)</span></span> <span class="type">uint32</span> &#123;</span><br><span class="line">    n := <span class="number">0</span></span><br><span class="line">    lock(&amp;allpLock)</span><br><span class="line">    <span class="comment">// 遍历所有的P</span></span><br><span class="line">    <span class="keyword">for</span> i := <span class="type">int32</span>(<span class="number">0</span>); i &lt; gomaxprocs; i++ &#123;</span><br><span class="line">        _p_ := allp[i]</span><br><span class="line">        <span class="keyword">if</span> _p_ == <span class="literal">nil</span> &#123;</span><br><span class="line">            <span class="keyword">continue</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 用于sysmon线程记录被监控P的系统调用时间和运行时间</span></span><br><span class="line">        pd := &amp;_p_.sysmontick</span><br><span class="line">        s := _p_.status</span><br><span class="line">        sysretake := <span class="literal">false</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> s == _Prunning || s == _Psyscall &#123;</span><br><span class="line">            <span class="comment">// P处于运行状态，检查是否运行得太久了</span></span><br><span class="line">            t := <span class="type">int64</span>(_p_.schedtick)</span><br><span class="line">            <span class="keyword">if</span> <span class="type">int64</span>(pd.schedtick) != t &#123;</span><br><span class="line">                pd.schedtick = <span class="type">uint32</span>(t)</span><br><span class="line">                pd.schedwhen = now</span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> pd.schedwhen+forcePreemptNS &lt;= now &#123;</span><br><span class="line">                <span class="comment">// pd.schedtick == t 说明这段时间未发生过调度</span></span><br><span class="line">                <span class="comment">// 同一个goroutine一直在运行，检查是否连续运行超过了10ms</span></span><br><span class="line">                preemptone(_p_)</span><br><span class="line">                sysretake = <span class="literal">true</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> s == _Psyscall &#123;</span><br><span class="line">            <span class="comment">// 系统调用状态的特殊处理</span></span><br><span class="line">            t := <span class="type">int64</span>(_p_.syscalltick)</span><br><span class="line">            <span class="keyword">if</span> !sysretake &amp;&amp; <span class="type">int64</span>(pd.syscalltick) != t &#123;</span><br><span class="line">                pd.syscalltick = <span class="type">uint32</span>(t)</span><br><span class="line">                pd.syscallwhen = now</span><br><span class="line">                <span class="keyword">continue</span></span><br><span class="line">            &#125;</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 满足以下条件之一则抢占该P：</span></span><br><span class="line">            <span class="comment">// 1. P的运行队列里面有等待运行的goroutine</span></span><br><span class="line">            <span class="comment">// 2. 没有空闲的P</span></span><br><span class="line">            <span class="comment">// 3. 系统调用时间超过10ms</span></span><br><span class="line">            <span class="keyword">if</span> runqempty(_p_) &amp;&amp; atomic.Load(&amp;sched.nmspinning)+atomic.Load(&amp;sched.npidle) &gt; <span class="number">0</span> &amp;&amp; </span><br><span class="line">               pd.syscallwhen+<span class="number">10</span>*<span class="number">1000</span>*<span class="number">1000</span> &gt; now &#123;</span><br><span class="line">                <span class="keyword">continue</span></span><br><span class="line">            &#125;</span><br><span class="line">            </span><br><span class="line">            unlock(&amp;allpLock)</span><br><span class="line">            incidlelocked(<span class="number">-1</span>)</span><br><span class="line">            <span class="keyword">if</span> atomic.Cas(&amp;_p_.status, s, _Pidle) &#123;</span><br><span class="line">                <span class="keyword">if</span> trace.enabled &#123;</span><br><span class="line">                    traceGoSysBlock(_p_)</span><br><span class="line">                    traceProcStop(_p_)</span><br><span class="line">                &#125;</span><br><span class="line">                n++</span><br><span class="line">                _p_.syscalltick++</span><br><span class="line">                <span class="comment">// 寻找新的M接管P</span></span><br><span class="line">                handoffp(_p_)</span><br><span class="line">            &#125;</span><br><span class="line">            incidlelocked(<span class="number">1</span>)</span><br><span class="line">            lock(&amp;allpLock)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    unlock(&amp;allpLock)</span><br><span class="line">    <span class="keyword">return</span> <span class="type">uint32</span>(n)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">preemptone</span><span class="params">(_p_ *p)</span></span> <span class="type">bool</span> &#123;</span><br><span class="line">    mp := _p_.m.ptr()</span><br><span class="line">    <span class="keyword">if</span> mp == <span class="literal">nil</span> || mp == getg().m &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">    &#125;</span><br><span class="line">    gp := mp.curg</span><br><span class="line">    <span class="keyword">if</span> gp == <span class="literal">nil</span> || gp == mp.g0 &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    gp.preempt = <span class="literal">true</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 设置抢占标志：将stackguard0设置为stackPreempt</span></span><br><span class="line">    <span class="comment">// 每次goroutine函数调用都会检查栈溢出，通过这种方式实现抢占检查</span></span><br><span class="line">    gp.stackguard0 = stackPreempt</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 如果支持异步抢占，发送抢占信号</span></span><br><span class="line">    <span class="keyword">if</span> preemptMSupported &amp;&amp; debug.asyncpreemptoff == <span class="number">0</span> &#123;</span><br><span class="line">        _p_.preempt = <span class="literal">true</span></span><br><span class="line">        preemptM(mp)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <h3 id="P-M解绑机制（Handoff）"><a href="#P-M解绑机制（Handoff）" class="headerlink" title="P-M解绑机制（Handoff）"></a>P-M解绑机制（Handoff）</h3><p>当Goroutine发生阻塞、系统调用或被抢占时，采用P-M解绑机制最大化资源利用率。</p>
 <h4 id="核心思想"><a href="#核心思想" class="headerlink" title="核心思想"></a>核心思想</h4><ul>
@@ -530,7 +367,7 @@
 <li><strong>M的灵活性</strong>：M作为执行载体，可以在阻塞时释放资源</li>
 <li><strong>动态绑定</strong>：根据系统负载动态调整P-M绑定关系</li>
 </ul>
-<h4 id="实现机制"><a href="#实现机制" class="headerlink" title="实现机制"></a>实现机制</h4><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs golang"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">handoffp</span><span class="hljs-params">(_p_ *p)</span></span> &#123;<br>    <span class="hljs-comment">// 如果本地或全局队列有工作，立即分配新的M</span><br>    <span class="hljs-keyword">if</span> !runqempty(_p_) || sched.runqsize != <span class="hljs-number">0</span> &#123;<br>        startm(_p_, <span class="hljs-literal">false</span>)<br>        <span class="hljs-keyword">return</span><br>    &#125;<br>    <br>    <span class="hljs-comment">// 系统繁忙时启动自旋M寻找工作</span><br>    <span class="hljs-keyword">if</span> atomic.Load(&amp;sched.nmspinning)+atomic.Load(&amp;sched.npidle) == <span class="hljs-number">0</span> &#123;<br>        startm(_p_, <span class="hljs-literal">true</span>) <span class="hljs-comment">// 启动自旋M</span><br>        <span class="hljs-keyword">return</span><br>    &#125;<br>    <br>    <span class="hljs-comment">// 无工作时将P放入空闲队列</span><br>    pidleput(_p_)<br>&#125;<br></code></pre></td></tr></table></figure>
+<h4 id="实现机制"><a href="#实现机制" class="headerlink" title="实现机制"></a>实现机制</h4><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">handoffp</span><span class="params">(_p_ *p)</span></span> &#123;</span><br><span class="line">    <span class="comment">// 如果本地或全局队列有工作，立即分配新的M</span></span><br><span class="line">    <span class="keyword">if</span> !runqempty(_p_) || sched.runqsize != <span class="number">0</span> &#123;</span><br><span class="line">        startm(_p_, <span class="literal">false</span>)</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 系统繁忙时启动自旋M寻找工作</span></span><br><span class="line">    <span class="keyword">if</span> atomic.Load(&amp;sched.nmspinning)+atomic.Load(&amp;sched.npidle) == <span class="number">0</span> &#123;</span><br><span class="line">        startm(_p_, <span class="literal">true</span>) <span class="comment">// 启动自旋M</span></span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 无工作时将P放入空闲队列</span></span><br><span class="line">    pidleput(_p_)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <h4 id="关键优化"><a href="#关键优化" class="headerlink" title="关键优化"></a>关键优化</h4><ol>
 <li><strong>工作检测</strong>：优先检查是否有待处理的Goroutine</li>
@@ -563,7 +400,7 @@
 <li><strong>上下文修改</strong>：信号处理函数修改被中断线程的执行上下文</li>
 <li><strong>异步切换</strong>：将执行流程重定向到<code>asyncPreempt</code>函数完成调度</li>
 </ol>
-<h4 id="核心代码"><a href="#核心代码" class="headerlink" title="核心代码"></a>核心代码</h4><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs golang"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">doSigPreempt</span><span class="hljs-params">(gp *g, ctxt *sigctxt)</span></span> &#123;<br>    <span class="hljs-keyword">if</span> wantAsyncPreempt(gp) &#123;<br>        <span class="hljs-keyword">if</span> ok, newpc := isAsyncSafePoint(gp, ctxt.sigpc(), ctxt.sigsp(), ctxt.siglr()); ok &#123;<br>            <span class="hljs-comment">// 修改执行上下文，注入asyncPreempt调用</span><br>            ctxt.pushCall(abi.FuncPCABI0(asyncPreempt), newpc)<br>        &#125;<br>    &#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">asyncPreempt2</span><span class="hljs-params">()</span></span> &#123;<br>    gp := getg()<br>    gp.asyncSafePoint = <span class="hljs-literal">true</span><br>    <span class="hljs-keyword">if</span> gp.preemptStop &#123;<br>        mcall(preemptPark)  <span class="hljs-comment">// GC抢占</span><br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        mcall(gopreempt_m)  <span class="hljs-comment">// 常规抢占</span><br>    &#125;<br>    gp.asyncSafePoint = <span class="hljs-literal">false</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<h4 id="核心代码"><a href="#核心代码" class="headerlink" title="核心代码"></a>核心代码</h4><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">doSigPreempt</span><span class="params">(gp *g, ctxt *sigctxt)</span></span> &#123;</span><br><span class="line">    <span class="keyword">if</span> wantAsyncPreempt(gp) &#123;</span><br><span class="line">        <span class="keyword">if</span> ok, newpc := isAsyncSafePoint(gp, ctxt.sigpc(), ctxt.sigsp(), ctxt.siglr()); ok &#123;</span><br><span class="line">            <span class="comment">// 修改执行上下文，注入asyncPreempt调用</span></span><br><span class="line">            ctxt.pushCall(abi.FuncPCABI0(asyncPreempt), newpc)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">asyncPreempt2</span><span class="params">()</span></span> &#123;</span><br><span class="line">    gp := getg()</span><br><span class="line">    gp.asyncSafePoint = <span class="literal">true</span></span><br><span class="line">    <span class="keyword">if</span> gp.preemptStop &#123;</span><br><span class="line">        mcall(preemptPark)  <span class="comment">// GC抢占</span></span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        mcall(gopreempt_m)  <span class="comment">// 常规抢占</span></span><br><span class="line">    &#125;</span><br><span class="line">    gp.asyncSafePoint = <span class="literal">false</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 
 
@@ -598,414 +435,4 @@
 <li><a target="_blank" rel="noopener" href="https://medium.com/a-journey-with-go/go-asynchronous-preemption-b5194227371c">Go: Asynchronous Preemption</a></li>
 <li><a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/1938510">了解go在协程调度上的改进</a></li>
 </ol>
-
-                
-              </div>
-            
-            <hr/>
-            <div>
-              <div class="post-metas my-3">
-  
-  
-    <div class="post-meta">
-      <i class="iconfont icon-tags"></i>
-      
-        <a href="/tags/GO/" class="print-no-link">#GO</a>
-      
-        <a href="/tags/GO-GMP/" class="print-no-link">#GO-GMP</a>
-      
-        <a href="/tags/Go%E8%B0%83%E5%BA%A6%E5%8E%9F%E7%90%86/" class="print-no-link">#Go调度原理</a>
-      
-    </div>
-  
-</div>
-
-
-              
-  
-
-  <div class="license-box my-3">
-    <div class="license-title">
-      <div>Go语言GMP调度器深度解析</div>
-      <div>http://codingwhat.github.io/2023/08/09/gmp-understanding/</div>
-    </div>
-    <div class="license-meta">
-      
-        <div class="license-meta-item">
-          <div>作者</div>
-          <div>codingWhat</div>
-        </div>
-      
-      
-        <div class="license-meta-item license-meta-date">
-          <div>发布于</div>
-          <div>2023年8月9日</div>
-        </div>
-      
-      
-      
-        <div class="license-meta-item">
-          <div>许可协议</div>
-          <div>
-            
-              
-              
-                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
-                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
-                    <i class="iconfont icon-by"></i>
-                  </span>
-                </a>
-              
-            
-          </div>
-        </div>
-      
-    </div>
-    <div class="license-icon iconfont"></div>
-  </div>
-
-
-
-              
-                <div class="post-prevnext my-3">
-                  <article class="post-prev col-6">
-                    
-                    
-                      <a href="/2024/07/09/limiter-in-action/" title="限流实战">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">限流实战</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
-                  </article>
-                  <article class="post-next col-6">
-                    
-                    
-                      <a href="/2023/07/08/Understating_GoGC/" title="深入理解Go垃圾回收器：原理、演进与性能优化">
-                        <span class="hidden-mobile">深入理解Go垃圾回收器：原理、演进与性能优化</span>
-                        <span class="visible-mobile">下一篇</span>
-                        <i class="iconfont icon-arrowright"></i>
-                      </a>
-                    
-                  </article>
-                </div>
-              
-            </div>
-
-            
-  
-  
-    <article id="comments" lazyload>
-      
-  <div id="valine"></div>
-  <script type="text/javascript">
-    Fluid.utils.loadComments('#valine', function() {
-      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
-        var options = Object.assign(
-          {"appId":"bp8GoUBWrJcqrTcWZR7ark7W-gzGzoHsz","appKey":"72QDRB9uHrgahwILCMXUBqo7","path":"window.location.pathname","placeholder":"说点什么","avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
-          {
-            el: "#valine",
-            path: window.location.pathname
-          }
-        )
-        new Valine(options);
-        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
-          var imgSelector = '#valine .vcontent img:not(.vemoji)';
-          Fluid.plugins.imageCaption(imgSelector);
-          Fluid.plugins.fancyBox(imgSelector);
-        })
-      });
-    });
-  </script>
-  <noscript>Please enable JavaScript to view the comments</noscript>
-
-
-    </article>
-  
-
-
-          </article>
-        </div>
-      </div>
-    </div>
-
-    <div class="side-col d-none d-lg-block col-lg-2">
-      
-  <aside class="sidebar" style="margin-left: -1rem">
-    <div id="toc">
-  <p class="toc-header">
-    <i class="iconfont icon-list"></i>
-    <span>目录</span>
-  </p>
-  <div class="toc-body" id="toc-body"></div>
-</div>
-
-
-
-  </aside>
-
-
-    </div>
-  </div>
-</div>
-
-
-
-
-
-  
-
-
-
-  
-
-
-
-  
-
-
-
-  
-
-
-
-  
-
-
-
-
-
-
-
-    
-
-    
-      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
-        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
-      </a>
-    
-
-    
-      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
-     aria-hidden="true">
-  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header text-center">
-        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
-        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body mx-3">
-        <div class="md-form mb-5">
-          <input type="text" id="local-search-input" class="form-control validate">
-          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
-        </div>
-        <div class="list-group" id="local-search-result"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-    
-
-    
-  </main>
-
-  <footer>
-    <div class="footer-inner">
-  
-    <div class="footer-content">
-       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Coding What</span></a> 
-    </div>
-  
-  
-    <div class="statistics">
-  
-  
-
-  
-    
-      <span id="leancloud-site-pv-container" style="display: none">
-        总访问量 
-        <span id="leancloud-site-pv"></span>
-         次
-      </span>
-    
-    
-      <span id="leancloud-site-uv-container" style="display: none">
-        总访客数 
-        <span id="leancloud-site-uv"></span>
-         人
-      </span>
-    
-    
-
-  
-</div>
-
-  
-  
-  
-</div>
-
-  </footer>
-
-  <!-- Scripts -->
-  
-  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
-  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
-
-  <script>
-    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
-    NProgress.start()
-    window.addEventListener('load', function() {
-      NProgress.done();
-    })
-  </script>
-
-
-<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
-<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
-<script  src="/js/events.js" ></script>
-<script  src="/js/plugins.js" ></script>
-
-
-  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
-  <script>
-    (function (window, document) {
-      var typing = Fluid.plugins.typing;
-      var subtitle = document.getElementById('subtitle');
-      if (!subtitle || !typing) {
-        return;
-      }
-      var text = subtitle.getAttribute('data-typed-text');
-      
-        typing(text);
-      
-    })(window, document);
-  </script>
-
-
-
-
-  
-    <script  src="/js/img-lazyload.js" ></script>
-  
-
-
-
-
-  
-<script>
-  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
-    var toc = jQuery('#toc');
-    if (toc.length === 0 || !window.tocbot) { return; }
-    var boardCtn = jQuery('#board-ctn');
-    var boardTop = boardCtn.offset().top;
-
-    window.tocbot.init(Object.assign({
-      tocSelector     : '#toc-body',
-      contentSelector : '.markdown-body',
-      linkClass       : 'tocbot-link',
-      activeLinkClass : 'tocbot-active-link',
-      listClass       : 'tocbot-list',
-      isCollapsedClass: 'tocbot-is-collapsed',
-      collapsibleClass: 'tocbot-is-collapsible',
-      scrollSmooth    : true,
-      includeTitleTags: true,
-      headingsOffset  : -boardTop,
-    }, CONFIG.toc));
-    if (toc.find('.toc-list-item').length > 0) {
-      toc.css('visibility', 'visible');
-    }
-
-    Fluid.events.registerRefreshCallback(function() {
-      if ('tocbot' in window) {
-        tocbot.refresh();
-        var toc = jQuery('#toc');
-        if (toc.length === 0 || !tocbot) {
-          return;
-        }
-        if (toc.find('.toc-list-item').length > 0) {
-          toc.css('visibility', 'visible');
-        }
-      }
-    });
-  });
-</script>
-
-
-  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
-
-  <script>Fluid.plugins.codeWidget();</script>
-
-
-  
-<script>
-  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
-    window.anchors.options = {
-      placement: CONFIG.anchorjs.placement,
-      visible  : CONFIG.anchorjs.visible
-    };
-    if (CONFIG.anchorjs.icon) {
-      window.anchors.options.icon = CONFIG.anchorjs.icon;
-    }
-    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
-    var res = [];
-    for (var item of el) {
-      res.push('.markdown-body > ' + item.trim());
-    }
-    if (CONFIG.anchorjs.placement === 'left') {
-      window.anchors.options.class = 'anchorjs-link-left';
-    }
-    window.anchors.add(res.join(', '));
-
-    Fluid.events.registerRefreshCallback(function() {
-      if ('anchors' in window) {
-        anchors.removeAll();
-        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
-        var res = [];
-        for (var item of el) {
-          res.push('.markdown-body > ' + item.trim());
-        }
-        if (CONFIG.anchorjs.placement === 'left') {
-          anchors.options.class = 'anchorjs-link-left';
-        }
-        anchors.add(res.join(', '));
-      }
-    });
-  });
-</script>
-
-
-  
-<script>
-  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
-    Fluid.plugins.fancyBox();
-  });
-</script>
-
-
-  <script>Fluid.plugins.imageCaption();</script>
-
-  <script defer src="/js/leancloud.js" ></script>
-
-  <script  src="/js/local-search.js" ></script>
-
-
-
-
-
-<!-- 主题的启动项，将它保持在最底部 -->
-<!-- the boot of the theme, keep it at the bottom -->
-<script  src="/js/boot.js" ></script>
-
-
-  
-
-  <noscript>
-    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
-  </noscript>
-</body>
-</html>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="http://codingWhat.github.io">codingWhat</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="http://codingwhat.github.io/2023/08/09/gmp-understanding/">http://codingwhat.github.io/2023/08/09/gmp-understanding/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="http://codingWhat.github.io" target="_blank">codingWhat Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/GO/">GO</a><a class="post-meta__tags" href="/tags/GO-GMP/">GO-GMP</a><a class="post-meta__tags" href="/tags/Go%E8%B0%83%E5%BA%A6%E5%8E%9F%E7%90%86/">Go调度原理</a></div><div class="post-share"><div class="social-share" data-image="/img/butterfly-icon.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2024/07/09/limiter-in-action/" title="限流实战"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">限流实战</div></div><div class="info-2"><div class="info-item-1"> 有经验的开发者都知道即便事前做了不同规模的容量模型，但是还是没办法准确预测未知的外部流量，因此服务必须得采取自保护策略，丢弃掉部分流量来保障服务的稳定性。   接下来我们会围绕静态、动态以及集群限流去讲解限流在不同场景下的工程实践。 静态限流标准库-令牌桶, 应对小规模突发流量;Uber-漏桶, 匀速限流; 突发流量丢弃量多; !!这个库(v0.3.0)有bug点击滑动窗口, 精度高; 占用内存固定窗口, 实现简单; 不精准，存在边界问题 总结:  实现简单 基于QPS限流静态限流, 无法根据服务的负载动态限流   限流阈值不好配置(请求的处理成本不一致)   节点扩缩, 需要重新设置  动手实践-令牌桶核心逻辑源自标准库的rate包 123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778type TokenBucket struct &#1...</div></div></div></a><a class="pagination-related" href="/2023/07/08/Understating_GoGC/" title="深入理解Go垃圾回收器：原理、演进与性能优化"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">深入理解Go垃圾回收器：原理、演进与性能优化</div></div><div class="info-2"><div class="info-item-1"> 本文深入分析Go语言垃圾回收器的设计原理、演进历程和性能优化策略，帮助开发者理解GC机制并进行有效的性能调优。     Go垃圾回收器演进历程Go语言垃圾回收器经历了多个重要版本迭代，每次演进都显著改善了GC性能： 关键版本节点Go 1.0-1.4（串行时代）  算法：串行三色标记清扫 特点：Stop-The-World期间进行完整的垃圾回收 性能：停顿时间长，随堆大小线性增长  Go 1.5（并发突破）  算法：并发三色标记 + 插入写屏障 改进：标记阶段与用户程序并发执行 性能：停顿时间降至100ms以内 意义：Go语言向低延迟应用迈出重要一步  Go 1.8（混合写屏障）  算法：混合写屏障（Hybrid Write Barrier） 突破：消除栈重扫，大幅减少STW时间 性能：停顿时间降至亚毫秒级别（&lt;1ms） 优势：解决了插入写屏障的栈空间重扫问题  Go 1.17（内存归还优化）  改进：采用MADV_DONTNEED替代MADV_FREE 效果：立即归还内存给操作系统，避免内存使用量误报 场景：特别适合容器化环境的内存管理  Go垃圾回收器核心原理基础架构G...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2023/07/08/Understating_GoGC/" title="深入理解Go垃圾回收器：原理、演进与性能优化"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2023-07-08</div><div class="info-item-2">深入理解Go垃圾回收器：原理、演进与性能优化</div></div><div class="info-2"><div class="info-item-1"> 本文深入分析Go语言垃圾回收器的设计原理、演进历程和性能优化策略，帮助开发者理解GC机制并进行有效的性能调优。     Go垃圾回收器演进历程Go语言垃圾回收器经历了多个重要版本迭代，每次演进都显著改善了GC性能： 关键版本节点Go 1.0-1.4（串行时代）  算法：串行三色标记清扫 特点：Stop-The-World期间进行完整的垃圾回收 性能：停顿时间长，随堆大小线性增长  Go 1.5（并发突破）  算法：并发三色标记 + 插入写屏障 改进：标记阶段与用户程序并发执行 性能：停顿时间降至100ms以内 意义：Go语言向低延迟应用迈出重要一步  Go 1.8（混合写屏障）  算法：混合写屏障（Hybrid Write Barrier） 突破：消除栈重扫，大幅减少STW时间 性能：停顿时间降至亚毫秒级别（&lt;1ms） 优势：解决了插入写屏障的栈空间重扫问题  Go 1.17（内存归还优化）  改进：采用MADV_DONTNEED替代MADV_FREE 效果：立即归还内存给操作系统，避免内存使用量误报 场景：特别适合容器化环境的内存管理  Go垃圾回收器核心原理基础架构G...</div></div></div></a><a class="pagination-related" href="/2022/12/18/go-mem-optimize-thought/" title="go内存优化分析思路"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2022-12-18</div><div class="info-item-2">go内存优化分析思路</div></div><div class="info-2"><div class="info-item-1"> 本文假设读者了解Go内存空间、堆栈等基础概念，若具备一定的go使用经验最佳    优化原则 切勿过早优化 善用语言分析工具  优化思路？内存优化的目标就是把不合理的、冗余、低效的内存使用逻辑变成合理、紧凑、高效的 而程序中使用到的内存不是在堆空间就是在栈空间，因此优化的核心就是这俩个内存段。go针对上述两种提供了完整的工具链，来帮助开发者定位和分析内存问题，最终写出高质量代码。  栈空间，使用 go build -gcflags=&quot;-m -l&quot; 包名&quot; 分析内存逃逸 堆空间，使用go自带的pprof分析程序堆内存使用情况。  栈空间优化思路： 尽可能将局部变量被分配到栈空间，减轻GC的扫描压力，减少逃逸的局部变量。 分析工具go在编译时通过gcflags分析特定包下所有函数变量的逃逸情况。 12# -l 禁止编译器内联优化go build -gcflags=&quot;-m -l&quot;  package  逃逸场景 函数外引用, return  局部变量太大 指针类型 接口类型，编译时无法确定大小， 反射  常见逃逸优化 局部变量slice&...</div></div></div></a><a class="pagination-related" href="/2024/07/09/limiter-in-action/" title="限流实战"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2024-07-09</div><div class="info-item-2">限流实战</div></div><div class="info-2"><div class="info-item-1"> 有经验的开发者都知道即便事前做了不同规模的容量模型，但是还是没办法准确预测未知的外部流量，因此服务必须得采取自保护策略，丢弃掉部分流量来保障服务的稳定性。   接下来我们会围绕静态、动态以及集群限流去讲解限流在不同场景下的工程实践。 静态限流标准库-令牌桶, 应对小规模突发流量;Uber-漏桶, 匀速限流; 突发流量丢弃量多; !!这个库(v0.3.0)有bug点击滑动窗口, 精度高; 占用内存固定窗口, 实现简单; 不精准，存在边界问题 总结:  实现简单 基于QPS限流静态限流, 无法根据服务的负载动态限流   限流阈值不好配置(请求的处理成本不一致)   节点扩缩, 需要重新设置  动手实践-令牌桶核心逻辑源自标准库的rate包 123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778type TokenBucket struct &#1...</div></div></div></a><a class="pagination-related" href="/2024/08/05/local-cache-go-impl/" title="实现高性能的本地缓存库"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2024-08-05</div><div class="info-item-2">实现高性能的本地缓存库</div></div><div class="info-2"><div class="info-item-1"> 在日常高流量场景中(读多写少场景)，经常会使用本地缓存来应对热点流量，保障系统的稳定。可是你有没有好奇过它底层是怎么实现的？数据是如何管理的？如果你来设计一个缓存库，你会如何设计?     他山之石，可以攻玉在开始之前，借助开源社区了解主流缓存库的种类、设计思想以及适用场景是一个明智的做法。通过这样的调研，可以了解到不同缓存库的特点和优势，并从中汲取经验，以设计出符合自己需求的缓存库。 为了方便学习和理解，我对主流库做了详细调研并整理出以下多维度对比图，帮助你更清晰地了解不同缓存库之间的差异和优势。 上述中比较有意思的是Zero-Gc这个概念，我总结下关键信息:如何实现Zero-GC?  完全避免GC: 采用syscall.MMap申请堆外内存，gc就不会扫描 规避GC扫描策略:   数组(固定了指针数量) + map[uint64]uint32(非指针) + []byte(参考freecache)  slice + 非指针的map + ringbuffer(参考bigcache)  如何选择？  读写性能要求? 比如ristretto底层依赖channel,Get很快，但是S...</div></div></div></a><a class="pagination-related" href="/2022/07/17/single-flight-analysis/" title="Single-flight 核心逻辑拆解"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2022-07-17</div><div class="info-item-2">Single-flight 核心逻辑拆解</div></div><div class="info-2"><div class="info-item-1">业务场景中经常会有缓存的身影，虽然缓存给我们带来了诸多好处，但是缓存带来的问题却不容小觑，常见的有缓存雪崩、缓存穿透、缓存击穿。 今天来说说缓存击穿及其解决方案。 问题场景当发生缓存击穿时，瞬时流量会涌入下游服务或者存储造成极大的冲击甚至打挂，此时业务应该如何应对？  解决方案:singleflight, 主要解决了:  流量合并，将N个请求-&gt;1个请求 流量拦截，如果发现已经有inflight请求，会阻塞等待inflight请求返回结果  核心逻辑 抽象同类请求，利用wg去控制阻塞 12345678type call struct &#123;	wg sync.WaitGroup //利用其Wait 阻塞请求	val interface&#123;&#125; // 返回结果，被阻塞请求需要    ## 省略非核心字段&#125; 保存全局瞬时请求 1234type Group struct &#123;	mu sync.Mutex       // protects m	m  map[string]*call // 保存全局请求，lazily initialized&#...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/butterfly-icon.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">codingWhat</div><div class="author-info-description">codingWhat Blog</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">12</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">43</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">This is my Blog</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B0%83%E5%BA%A6%E5%99%A8%E5%8F%91%E5%B1%95%E5%8E%86%E7%A8%8B"><span class="toc-number">1.</span> <span class="toc-text">调度器发展历程</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%97%A9%E6%9C%9FGM%E6%A8%A1%E5%9E%8B%E7%9A%84%E9%99%90%E5%88%B6"><span class="toc-number">1.1.</span> <span class="toc-text">早期GM模型的限制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#GMP%E6%A8%A1%E5%9E%8B%E7%9A%84%E4%BC%98%E5%8A%BF"><span class="toc-number">1.2.</span> <span class="toc-text">GMP模型的优势</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B0%83%E5%BA%A6%E5%99%A8%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5"><span class="toc-number">2.</span> <span class="toc-text">调度器核心概念</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Processor-P"><span class="toc-number">2.1.</span> <span class="toc-text">Processor (P)</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E5%8A%9F%E8%83%BD"><span class="toc-number">2.1.1.</span> <span class="toc-text">核心功能</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#P%E7%9A%84%E7%8A%B6%E6%80%81%E8%BD%AC%E6%8D%A2"><span class="toc-number">2.1.2.</span> <span class="toc-text">P的状态转换</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Goroutine-G"><span class="toc-number">2.2.</span> <span class="toc-text">Goroutine (G)</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E7%8A%B6%E6%80%81%E6%A8%A1%E5%9E%8B"><span class="toc-number">2.2.1.</span> <span class="toc-text">基本状态模型</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%AF%A6%E7%BB%86%E7%8A%B6%E6%80%81%E8%BD%AC%E6%8D%A2"><span class="toc-number">2.2.2.</span> <span class="toc-text">详细状态转换</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%89%B9%E6%AE%8A%E5%AF%B9%E8%B1%A1%E4%B8%8E%E5%85%A8%E5%B1%80%E7%AE%A1%E7%90%86"><span class="toc-number">2.3.</span> <span class="toc-text">特殊对象与全局管理</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%B3%BB%E7%BB%9F%E5%88%9D%E5%A7%8B%E5%AF%B9%E8%B1%A1"><span class="toc-number">2.3.1.</span> <span class="toc-text">系统初始对象</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%A8%E5%B1%80%E7%AE%A1%E7%90%86%E7%BB%93%E6%9E%84"><span class="toc-number">2.3.2.</span> <span class="toc-text">全局管理结构</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GMP%E8%B0%83%E5%BA%A6%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3"><span class="toc-number">3.</span> <span class="toc-text">GMP调度机制详解</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B3%BB%E7%BB%9F%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B"><span class="toc-number">3.1.</span> <span class="toc-text">系统启动流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Goroutine%E5%88%9B%E5%BB%BA%E4%B8%8E%E9%98%9F%E5%88%97%E7%AE%A1%E7%90%86"><span class="toc-number">3.2.</span> <span class="toc-text">Goroutine创建与队列管理</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9C%AC%E5%9C%B0%E9%98%9F%E5%88%97%E7%BB%93%E6%9E%84"><span class="toc-number">3.2.1.</span> <span class="toc-text">本地队列结构</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%98%9F%E5%88%97%E6%BA%A2%E5%87%BA%E5%A4%84%E7%90%86"><span class="toc-number">3.2.2.</span> <span class="toc-text">队列溢出处理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E6%B5%81%E7%A8%8B"><span class="toc-number">3.2.3.</span> <span class="toc-text">创建流程</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Goroutine%E8%B0%83%E5%BA%A6%E7%AD%96%E7%95%A5"><span class="toc-number">3.3.</span> <span class="toc-text">Goroutine调度策略</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%B0%83%E5%BA%A6%E4%BC%98%E5%85%88%E7%BA%A7%E5%BA%8F%E5%88%97"><span class="toc-number">3.3.1.</span> <span class="toc-text">调度优先级序列</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%AC%E5%B9%B3%E6%80%A7%E6%9C%BA%E5%88%B6"><span class="toc-number">3.3.2.</span> <span class="toc-text">公平性机制</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%B0%83%E5%BA%A6%E6%B5%81%E7%A8%8B%E5%9B%BE%E8%A7%A3"><span class="toc-number">3.3.3.</span> <span class="toc-text">调度流程图解</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Work-Stealing%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E6%9C%BA%E5%88%B6"><span class="toc-number">3.4.</span> <span class="toc-text">Work-Stealing负载均衡机制</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%81%B7%E5%8F%96%E7%AD%96%E7%95%A5"><span class="toc-number">3.4.1.</span> <span class="toc-text">偷取策略</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E7%AE%97%E6%B3%95%EF%BC%9Arunqgrab"><span class="toc-number">3.4.2.</span> <span class="toc-text">核心算法：runqgrab</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%AE%97%E6%B3%95%E7%89%B9%E7%82%B9"><span class="toc-number">3.4.3.</span> <span class="toc-text">算法特点</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8A%A2%E5%8D%A0%E5%BC%8F%E8%B0%83%E5%BA%A6%E6%9C%BA%E5%88%B6"><span class="toc-number">4.</span> <span class="toc-text">抢占式调度机制</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%8F%E4%BD%9C%E5%BC%8F%E4%B8%8E%E6%8A%A2%E5%8D%A0%E5%BC%8F%E5%AF%B9%E6%AF%94"><span class="toc-number">4.1.</span> <span class="toc-text">协作式与抢占式对比</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%A7%E8%83%BD%E7%89%B9%E5%BE%81%E5%88%86%E6%9E%90"><span class="toc-number">4.2.</span> <span class="toc-text">性能特征分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B3%BB%E7%BB%9F%E7%9B%91%E6%8E%A7%E7%BA%BF%E7%A8%8B%EF%BC%88Sysmon%EF%BC%89"><span class="toc-number">4.3.</span> <span class="toc-text">系统监控线程（Sysmon）</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E8%81%8C%E8%B4%A3"><span class="toc-number">4.3.1.</span> <span class="toc-text">核心职责</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B7%A5%E4%BD%9C%E6%A8%A1%E5%BC%8F"><span class="toc-number">4.3.2.</span> <span class="toc-text">工作模式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8A%A2%E5%8D%A0%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3"><span class="toc-number">4.3.3.</span> <span class="toc-text">抢占机制详解</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%8A%A2%E5%8D%A0%E8%A7%A6%E5%8F%91%E6%9D%A1%E4%BB%B6"><span class="toc-number">4.3.3.1.</span> <span class="toc-text">抢占触发条件</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%8A%A2%E5%8D%A0%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B"><span class="toc-number">4.3.3.2.</span> <span class="toc-text">抢占执行流程</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%B3%E9%94%AE%E6%BA%90%E7%A0%81%E5%AE%9E%E7%8E%B0"><span class="toc-number">4.3.4.</span> <span class="toc-text">关键源码实现</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#P-M%E8%A7%A3%E7%BB%91%E6%9C%BA%E5%88%B6%EF%BC%88Handoff%EF%BC%89"><span class="toc-number">4.4.</span> <span class="toc-text">P-M解绑机制（Handoff）</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E6%80%9D%E6%83%B3"><span class="toc-number">4.4.1.</span> <span class="toc-text">核心思想</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%9E%E7%8E%B0%E6%9C%BA%E5%88%B6"><span class="toc-number">4.4.2.</span> <span class="toc-text">实现机制</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%B3%E9%94%AE%E4%BC%98%E5%8C%96"><span class="toc-number">4.4.3.</span> <span class="toc-text">关键优化</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%A4%E7%A7%8D%E6%8A%A2%E5%8D%A0%E6%9C%BA%E5%88%B6%E5%AF%B9%E6%AF%94"><span class="toc-number">5.</span> <span class="toc-text">两种抢占机制对比</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9F%BA%E4%BA%8E%E5%8D%8F%E4%BD%9C%E7%9A%84%E6%8A%A2%E5%8D%A0%E5%BC%8F%E8%B0%83%E5%BA%A6"><span class="toc-number">5.1.</span> <span class="toc-text">基于协作的抢占式调度</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86"><span class="toc-number">5.1.1.</span> <span class="toc-text">实现原理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%A7%A6%E5%8F%91%E6%9D%A1%E4%BB%B6"><span class="toc-number">5.1.2.</span> <span class="toc-text">触发条件</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B1%80%E9%99%90%E6%80%A7"><span class="toc-number">5.1.3.</span> <span class="toc-text">局限性</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9F%BA%E4%BA%8E%E4%BF%A1%E5%8F%B7%E7%9A%84%E5%BC%82%E6%AD%A5%E6%8A%A2%E5%8D%A0%E8%B0%83%E5%BA%A6"><span class="toc-number">5.2.</span> <span class="toc-text">基于信号的异步抢占调度</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86-1"><span class="toc-number">5.2.1.</span> <span class="toc-text">实现原理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E4%BB%A3%E7%A0%81"><span class="toc-number">5.2.2.</span> <span class="toc-text">核心代码</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%A7%A6%E5%8F%91%E5%9C%BA%E6%99%AF"><span class="toc-number">5.2.3.</span> <span class="toc-text">触发场景</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BC%98%E5%8A%BF%E4%B8%8E%E6%84%8F%E4%B9%89"><span class="toc-number">5.2.4.</span> <span class="toc-text">优势与意义</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">6.</span> <span class="toc-text">总结</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E4%BC%98%E5%8A%BF"><span class="toc-number">6.1.</span> <span class="toc-text">核心优势</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%A7%E8%83%BD%E7%89%B9%E5%BE%81"><span class="toc-number">6.2.</span> <span class="toc-text">性能特征</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-number">7.</span> <span class="toc-text">参考资料</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2025/08/17/effective-vibe-coding-with-claude/" title="Claude Code高效开发实践指南">Claude Code高效开发实践指南</a><time datetime="2025-08-17T15:22:17.000Z" title="发表于 2025-08-17 23:22:17">2025-08-17</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/09/19/rwmutex-deadlock/" title="Go RWMutex读锁重入死锁问题深度分析">Go RWMutex读锁重入死锁问题深度分析</a><time datetime="2024-09-19T04:09:42.000Z" title="发表于 2024-09-19 12:09:42">2024-09-19</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/08/05/local-cache-go-impl/" title="实现高性能的本地缓存库">实现高性能的本地缓存库</a><time datetime="2024-08-05T14:40:01.000Z" title="发表于 2024-08-05 22:40:01">2024-08-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/07/28/service-avaliable/" title="服务高可用治理系列（一）：SRE理论基础与度量体系">服务高可用治理系列（一）：SRE理论基础与度量体系</a><time datetime="2024-07-28T09:52:10.000Z" title="发表于 2024-07-28 17:52:10">2024-07-28</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/07/17/service-high-available-governance/" title="服务高可用治理系列（二）：技术实现与架构设计实战">服务高可用治理系列（二）：技术实现与架构设计实战</a><time datetime="2024-07-17T08:41:53.000Z" title="发表于 2024-07-17 16:41:53">2024-07-17</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 By codingWhat</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.4.3</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
