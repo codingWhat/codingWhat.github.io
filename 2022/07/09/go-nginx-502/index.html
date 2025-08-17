@@ -1,30 +1,11 @@
-
-
-<!DOCTYPE html>
-<html lang="zh-CN" data-default-color-scheme=auto>
-
-
-
-<head>
-  <meta charset="UTF-8">
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
-  <link rel="icon" href="/img/fluid.png">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
-  <meta http-equiv="x-ua-compatible" content="ie=edge">
-  
-  <meta name="theme-color" content="#2f4154">
-  <meta name="author" content="codingWhat">
-  <meta name="keywords" content="evanhan codingWhat 博客 韩伟的博客 系统设计 后端开发">
-  
-    <meta name="description" content="线上巡检发现很多502日志，于是就开始了漫漫debug">
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>go_nginx_502问题排查 | codingWhat Blog</title><meta name="author" content="codingWhat"><meta name="copyright" content="codingWhat"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="线上巡检发现很多502日志，于是就开始了漫漫debug">
 <meta property="og:type" content="article">
 <meta property="og:title" content="go_nginx_502问题排查">
 <meta property="og:url" content="http://codingwhat.github.io/2022/07/09/go-nginx-502/index.html">
 <meta property="og:site_name" content="codingWhat Blog">
 <meta property="og:description" content="线上巡检发现很多502日志，于是就开始了漫漫debug">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://codingwhat.github.io/images/wireshark_502.png">
-<meta property="og:image" content="http://codingwhat.github.io/images/now_502.png">
+<meta property="og:image" content="http://codingwhat.github.io/img/butterfly-icon.png">
 <meta property="article:published_time" content="2022-07-09T08:35:08.000Z">
 <meta property="article:modified_time" content="2025-08-17T11:52:05.693Z">
 <meta property="article:author" content="codingWhat">
@@ -32,291 +13,156 @@
 <meta property="article:tag" content="Nginx">
 <meta property="article:tag" content="502">
 <meta property="article:tag" content="keepalive">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="http://codingwhat.github.io/images/wireshark_502.png">
-  
-  
-  
-  <title>go_nginx_502问题排查 - codingWhat Blog</title>
-
-  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
-
-
-
-  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
-
-  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
-
-  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
-
-
-
-<!-- 主题依赖的图标库，不要自行修改 -->
-<!-- Do not modify the link that theme dependent icons -->
-
-<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
-
-
-
-<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
-
-
-<link  rel="stylesheet" href="/css/main.css" />
-
-
-  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
-  
-    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
-  
-
-
-
-
-  <script id="fluid-configs">
-    var Fluid = window.Fluid || {};
-    Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"codingwhat.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"bp8GoUBWrJcqrTcWZR7ark7W-gzGzoHsz","app_key":"72QDRB9uHrgahwILCMXUBqo7","server_url":"https://bp8goubw.lc-cn-n1-shared.com","path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
-
-    if (CONFIG.web_analytics.follow_dnt) {
-      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
-      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://codingwhat.github.io/img/butterfly-icon.png"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "go_nginx_502问题排查",
+  "url": "http://codingwhat.github.io/2022/07/09/go-nginx-502/",
+  "image": "http://codingwhat.github.io/img/butterfly-icon.png",
+  "datePublished": "2022-07-09T08:35:08.000Z",
+  "dateModified": "2025-08-17T11:52:05.693Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "codingWhat",
+      "url": "http://codingWhat.github.io"
     }
-  </script>
-  <script  src="/js/utils.js" ></script>
-  <script  src="/js/color-schema.js" ></script>
-  
-
-  
-
-  
-    <!-- Google tag (gtag.js) -->
-    <script async>
-      if (!Fluid.ctx.dnt) {
-        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=", function() {
-          window.dataLayer = window.dataLayer || [];
-          function gtag() {
-            dataLayer.push(arguments);
-          }
-          gtag('js', new Date());
-          gtag('config', '');
-        });
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="http://codingwhat.github.io/2022/07/09/go-nginx-502/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
       }
-    </script>
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
   
-
-  
-
-  
-
-  
-
-  
-    
-  
-
-
-
-  
-<meta name="generator" content="Hexo 7.3.0"></head>
-
-
-<body>
-  
-
-  <header>
-    
-
-<div class="header-inner" style="height: 70vh;">
-  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
-  <div class="container">
-    <a class="navbar-brand" href="/">
-      <strong>Coding What Blog</strong>
-    </a>
-
-    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
-            data-target="#navbarSupportedContent"
-            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-      <div class="animated-icon"><span></span><span></span><span></span></div>
-    </button>
-
-    <!-- Collapsible content -->
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav ml-auto text-center">
-        
-          
-          
-          
-          
-            <li class="nav-item">
-              <a class="nav-link" href="/" target="_self">
-                <i class="iconfont icon-home-fill"></i>
-                <span>首页</span>
-              </a>
-            </li>
-          
-        
-          
-          
-          
-          
-            <li class="nav-item">
-              <a class="nav-link" href="/archives/" target="_self">
-                <i class="iconfont icon-archive-fill"></i>
-                <span>归档</span>
-              </a>
-            </li>
-          
-        
-          
-          
-          
-          
-            <li class="nav-item">
-              <a class="nav-link" href="/categories/" target="_self">
-                <i class="iconfont icon-category-fill"></i>
-                <span>分类</span>
-              </a>
-            </li>
-          
-        
-          
-          
-          
-          
-            <li class="nav-item">
-              <a class="nav-link" href="/tags/" target="_self">
-                <i class="iconfont icon-tags-fill"></i>
-                <span>标签</span>
-              </a>
-            </li>
-          
-        
-          
-          
-          
-          
-            <li class="nav-item">
-              <a class="nav-link" href="/about/" target="_self">
-                <i class="iconfont icon-user-fill"></i>
-                <span>关于</span>
-              </a>
-            </li>
-          
-        
-        
-          <li class="nav-item" id="search-btn">
-            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
-              <i class="iconfont icon-search"></i>
-            </a>
-          </li>
-          
-        
-        
-          <li class="nav-item" id="color-toggle-btn">
-            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
-              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
-            </a>
-          </li>
-        
-      </ul>
-    </div>
-  </div>
-</nav>
-
-  
-
-<div id="banner" class="banner" parallax=true
-     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
-  <div class="full-bg-img">
-    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
-      <div class="banner-text text-center fade-in-up">
-        <div class="h2">
-          
-            <span id="subtitle" data-typed-text="go_nginx_502问题排查"></span>
-          
-        </div>
-
-        
-          
-  <div class="mt-3">
-    
-    
-      <span class="post-meta">
-        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2022-07-09 16:35" pubdate>
-          2022年7月9日 下午
-        </time>
-      </span>
-    
-  </div>
-
-  <div class="mt-1">
-    
-      <span class="post-meta mr-2">
-        <i class="iconfont icon-chart"></i>
-        
-          1.1k 字
-        
-      </span>
-    
-
-    
-      <span class="post-meta mr-2">
-        <i class="iconfont icon-clock-fill"></i>
-        
-        
-        
-          10 分钟
-        
-      </span>
-    
-
-    
-    
       
-        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
-          <i class="iconfont icon-eye" aria-hidden="true"></i>
-          <span id="leancloud-page-views"></span> 次
-        </span>
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
         
       
-    
-  </div>
-
-
-        
-      </div>
-
-      
-    </div>
-  </div>
-</div>
-
-</div>
-
-  </header>
-
-  <main>
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
     
       
-
-<div class="container-fluid nopadding-x">
-  <div class="row nomargin-x">
-    <div class="side-col d-none d-lg-block col-lg-2">
-      
-
-    </div>
-
-    <div class="col-lg-8 nopadding-x-md">
-      <div class="container nopadding-x-md" id="board-ctn">
-        <div id="board">
-          <article class="post-content mx-auto">
-            <h1 id="seo-header">go_nginx_502问题排查</h1>
-            
-            
-              <div class="markdown-body">
-                
-                <blockquote>
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":300,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'go_nginx_502问题排查',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/butterfly-icon.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">12</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">43</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/images/tech-bg.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">codingWhat Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">go_nginx_502问题排查</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">go_nginx_502问题排查</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-07-09T08:35:08.000Z" title="发表于 2022-07-09 16:35:08">2022-07-09</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-08-17T11:52:05.693Z" title="更新于 2025-08-17 19:52:05">2025-08-17</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><blockquote>
 <p>线上巡检发现很多502日志，于是就开始了漫漫debug</p>
 </blockquote>
 <span id="more"></span>
@@ -344,13 +190,13 @@
 <p>nginx error log: “upstream prematurely closed connection while reading response header from upstream”</p>
 </blockquote>
 <p>很明显服务主动关闭了连接，httpServer主动关闭连接一般是read&#x2F;write超时了, 但是查看服务配置发现read&#x2F;write分别1s&#x2F;3s, 并且服务逻辑中都有严格的超时控制、没有阻塞逻辑，讲道理不太可能触发，所以这里排除。问题到这里似乎进到死胡同了，这时在看server源码是发现<font color="red">idletimeout</font>这个配置, 如果没有设置默认取read timeout，经google之后发现就是keepalive的timeout。我们知道http&#x2F;1.1默认都是keepalive的, 如果触发了keepalive timeout, server会主动关闭连接，于是开始抓包分析(如下图)，发现go服务在1s之后主动断开了和nginx的连接。</p>
-<p><img src="/images/wireshark_502.png" srcset="/img/loading.gif" lazyload alt="img.png"></p>
+<p><img src="/images/wireshark_502.png" alt="img.png"></p>
 <p>这里总结下整个请求链路.<br>首先nginx和upstream server(go 服务)之间会创建多个连接；外部请求进来以后, nginx作为client端，从连接池获取一个连接请求，如果此时刚好这个连接keepalive timeout了那么就会触发502。</p>
 <p>问题解决:</p>
 <ol>
-<li>nginx proxy设置keepalive;<br><code>proxy_http_version 1.1</code> 、 <code>proxy_set_header Connection &quot;&quot;</code><br>upstream不需要外部请求Connection控制，直接清空<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs nginx"><span class="hljs-section">location</span> / &#123;<br>        <span class="hljs-attribute">proxy_pass</span> xxxx;<br>        <br>        <span class="hljs-comment"># !!!!! start </span><br>        <span class="hljs-attribute">proxy_http_version</span> <span class="hljs-number">1</span>.<span class="hljs-number">1</span>;<br>        <span class="hljs-attribute">proxy_set_header</span> Connection <span class="hljs-string">&quot;&quot;</span>;<br>         <span class="hljs-comment"># !!!!! end </span><br>        <span class="hljs-comment">#proxy_read_timeout     300;    </span><br>        <span class="hljs-comment">#proxy_connect_timeout  300;</span><br>        <span class="hljs-comment">#proxy_set_header X-Real-IP $remote_addr;</span><br>        <span class="hljs-comment"># needed for HTTPS</span><br>        <span class="hljs-comment"># # proxy_set_header X_FORWARDED_PROTO https;</span><br>        <span class="hljs-comment">#proxy_set_header X-Forwarded-For $remote_addr;</span><br>        <span class="hljs-comment">#proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;</span><br>        <span class="hljs-comment">#proxy_set_header Host $host;</span><br>&#125;<br></code></pre></td></tr></table></figure></li>
-<li>nginx.conf设置keepalive timeout<br>这里时nginx和外部请求的keepalive, 如果超过这时间nginx会关闭连接。<figure class="highlight abnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs abnf">keepalive_timeout  <span class="hljs-number">60</span>s<span class="hljs-comment">;</span><br></code></pre></td></tr></table></figure></li>
-<li>upstream server设置keepalive timeout<figure class="highlight lasso"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs lasso">&amp;http.Server&#123;<br>		#Addr: addr,<br>		#Handler:    http.HandlerFunc(ServeHTTP),<br>		#ReadTimeout:  time.<span class="hljs-built_in">Duration</span>(httpRunner.ReadTimeout) * time.Second,<br>		#WriteTimeout: time.<span class="hljs-built_in">Duration</span>(httpRunner.WriteTimeout) * time.Second,<br>		<span class="hljs-params">...</span><br>		IdleTimeout:  time.<span class="hljs-built_in">Duration</span>(httpRunner.IdleTimeout) * time.Second,<br>		<span class="hljs-params">...</span><br>		#ConnState:    httpRunner.connState,<br>		#ErrorLog:     syslog.<span class="hljs-literal">New</span>(httpErrorLog&#123;logger&#125;, <span class="hljs-string">&quot;&quot;</span>, <span class="hljs-number">0</span>),<br>	&#125;<br></code></pre></td></tr></table></figure></li>
+<li>nginx proxy设置keepalive;<br><code>proxy_http_version 1.1</code> 、 <code>proxy_set_header Connection &quot;&quot;</code><br>upstream不需要外部请求Connection控制，直接清空<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">location / &#123;</span><br><span class="line">        proxy_pass xxxx;</span><br><span class="line">        </span><br><span class="line">        # !!!!! start </span><br><span class="line">        proxy_http_version 1.1;</span><br><span class="line">        proxy_set_header Connection &quot;&quot;;</span><br><span class="line">         # !!!!! end </span><br><span class="line">        #proxy_read_timeout     300;    </span><br><span class="line">        #proxy_connect_timeout  300;</span><br><span class="line">        #proxy_set_header X-Real-IP $remote_addr;</span><br><span class="line">        # needed for HTTPS</span><br><span class="line">        # # proxy_set_header X_FORWARDED_PROTO https;</span><br><span class="line">        #proxy_set_header X-Forwarded-For $remote_addr;</span><br><span class="line">        #proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;</span><br><span class="line">        #proxy_set_header Host $host;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>nginx.conf设置keepalive timeout<br>这里时nginx和外部请求的keepalive, 如果超过这时间nginx会关闭连接。<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">keepalive_timeout  60s;</span><br></pre></td></tr></table></figure></li>
+<li>upstream server设置keepalive timeout<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&amp;http.Server&#123;</span><br><span class="line">		#Addr: addr,</span><br><span class="line">		#Handler:    http.HandlerFunc(ServeHTTP),</span><br><span class="line">		#ReadTimeout:  time.Duration(httpRunner.ReadTimeout) * time.Second,</span><br><span class="line">		#WriteTimeout: time.Duration(httpRunner.WriteTimeout) * time.Second,</span><br><span class="line">		...</span><br><span class="line">		IdleTimeout:  time.Duration(httpRunner.IdleTimeout) * time.Second,</span><br><span class="line">		...</span><br><span class="line">		#ConnState:    httpRunner.connState,</span><br><span class="line">		#ErrorLog:     syslog.New(httpErrorLog&#123;logger&#125;, &quot;&quot;, 0),</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure></li>
 </ol>
 <h3 id="问题2-listen-backlog-过低"><a href="#问题2-listen-backlog-过低" class="headerlink" title="问题2: listen backlog 过低"></a>问题2: listen backlog 过低</h3><p>在对服务进行压测时，发现请求如果走nginx会发生阻塞，而直接压测服务却能正常运行，此时发现nginx日志有大量502</p>
 <p>问题解决:</p>
@@ -359,7 +205,7 @@
 <li>注意全局长连接队列限制 <code>/proc/sys/net/core/somaxconn</code> 也得调整，<code>nginx backlog</code> &lt;&#x3D; <code>somaxconn</code></li>
 </ol>
 <h3 id="问题3-暴力清理nginx日志"><a href="#问题3-暴力清理nginx日志" class="headerlink" title="问题3: 暴力清理nginx日志"></a>问题3: 暴力清理nginx日志</h3><p>通过keepalive配置，502问题确实明显改善了，但是突然过了几天，又偶现了502问题，在排查基础资源监控时发现502的时间点，恰好有磁盘和内存空间骤降；<br>这里定位是因为反向代理的nginx会记录access日志，而我们的服务流量很高access日志容易写满，需要定时清理，清理逻辑：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># crontab</span><br><span class="hljs-built_in">echo</span> &gt; /path/access.log<br></code></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># crontab</span><br><span class="line">echo &gt; /path/access.log</span><br></pre></td></tr></table></figure>
 <p>这里有个背景说明下:<br>access文件是会被采集程序访问上报到日志平台。上述直接”echo &gt; “ 是可能会导致os.Cache中日志被清理,可能采集程序就会采集不到，出现异常。</p>
 <p>改造逻辑: </p>
 <ul>
@@ -370,413 +216,7 @@
 <ol>
 <li>按access.log 10g为切割</li>
 <li>历史文件不会立即被清理会，等待10min，保证采集程序能采集成功</li>
-<li>kill -USR1 nginxpid, 命令nginx重新加载配置。<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs routeros"><span class="hljs-attribute">file_path</span>=<span class="hljs-string">&quot;/path/&quot;</span><br><span class="hljs-attribute">log_file</span>=<span class="hljs-string">&quot;access.log&quot;</span><br><span class="hljs-comment">#nginx进程id</span><br><span class="hljs-attribute">nginx_pid</span>=<span class="hljs-string">&quot;/path/nginx.pid &quot;</span><br><span class="hljs-comment">#单位:G</span><br><span class="hljs-attribute">max_log_size</span>=10<br><span class="hljs-comment"># 备份日志最长存活时间 单位:s</span><br><span class="hljs-attribute">max_log_ttl</span>=300<br><br><br><span class="hljs-attribute">timestamp</span>=$(date +%s)<br><span class="hljs-attribute">log_back_file</span>=<span class="hljs-string">&quot;<span class="hljs-variable">$file_path</span><span class="hljs-variable">$log_file</span>-bak-<span class="hljs-variable">$timestamp</span>&quot;</span><br><span class="hljs-comment"># 获取文件大小（以字节为单位）</span><br><span class="hljs-attribute">file_size</span>=$(stat -c <span class="hljs-string">&quot;%s&quot;</span> <span class="hljs-string">&quot;<span class="hljs-variable">$file_path</span><span class="hljs-variable">$log_file</span>&quot;</span>)<br><span class="hljs-attribute">file_size_gb</span>=$(echo <span class="hljs-string">&quot;scale=2; <span class="hljs-variable">$file_size</span> / 1024^3&quot;</span> | bc)<br><span class="hljs-comment"># 判断文件大小是否超过10G</span><br><span class="hljs-keyword">if</span> (( $(echo <span class="hljs-string">&quot;<span class="hljs-variable">$file_size_gb</span> &gt; <span class="hljs-variable">$max_log_size</span> &quot;</span> | bc -l) )); then<br>    mv <span class="hljs-variable">$file_path</span><span class="hljs-variable">$log_file</span>  <span class="hljs-variable">$log_back_file</span><br>    cat <span class="hljs-variable">$nginx_pid</span> | xargs kill -USR1<br>fi<br><br><span class="hljs-comment"># 遍历当前目录下的所有文件</span><br><span class="hljs-keyword">for</span> file <span class="hljs-keyword">in</span> <span class="hljs-string">&quot;<span class="hljs-variable">$file_path</span>/<span class="hljs-variable">$log_file</span>&quot;</span>-bak-*; <span class="hljs-keyword">do</span><br>    # 检查文件是否为普通文件并且修改时间超过10分钟<br>    <span class="hljs-keyword">if</span> [[ -f <span class="hljs-string">&quot;<span class="hljs-variable">$file</span>&quot;</span> &amp;&amp; $(($(date +%s) - $(stat -c %Y <span class="hljs-string">&quot;<span class="hljs-variable">$file</span>&quot;</span>))) -gt <span class="hljs-variable">$max_log_ttl</span> ]]; then<br>        # 删除文件<br>        rm <span class="hljs-string">&quot;<span class="hljs-variable">$file</span>&quot;</span><br>        echo <span class="hljs-string">&quot;已删除文件: <span class="hljs-variable">$file</span>&quot;</span><br>    fi<br>done<br></code></pre></td></tr></table></figure></li>
+<li>kill -USR1 nginxpid, 命令nginx重新加载配置。<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">file_path=&quot;/path/&quot;</span><br><span class="line">log_file=&quot;access.log&quot;</span><br><span class="line">#nginx进程id</span><br><span class="line">nginx_pid=&quot;/path/nginx.pid &quot;</span><br><span class="line">#单位:G</span><br><span class="line">max_log_size=10</span><br><span class="line"># 备份日志最长存活时间 单位:s</span><br><span class="line">max_log_ttl=300</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">timestamp=$(date +%s)</span><br><span class="line">log_back_file=&quot;$file_path$log_file-bak-$timestamp&quot;</span><br><span class="line"># 获取文件大小（以字节为单位）</span><br><span class="line">file_size=$(stat -c &quot;%s&quot; &quot;$file_path$log_file&quot;)</span><br><span class="line">file_size_gb=$(echo &quot;scale=2; $file_size / 1024^3&quot; | bc)</span><br><span class="line"># 判断文件大小是否超过10G</span><br><span class="line">if (( $(echo &quot;$file_size_gb &gt; $max_log_size &quot; | bc -l) )); then</span><br><span class="line">    mv $file_path$log_file  $log_back_file</span><br><span class="line">    cat $nginx_pid | xargs kill -USR1</span><br><span class="line">fi</span><br><span class="line"></span><br><span class="line"># 遍历当前目录下的所有文件</span><br><span class="line">for file in &quot;$file_path/$log_file&quot;-bak-*; do</span><br><span class="line">    # 检查文件是否为普通文件并且修改时间超过10分钟</span><br><span class="line">    if [[ -f &quot;$file&quot; &amp;&amp; $(($(date +%s) - $(stat -c %Y &quot;$file&quot;))) -gt $max_log_ttl ]]; then</span><br><span class="line">        # 删除文件</span><br><span class="line">        rm &quot;$file&quot;</span><br><span class="line">        echo &quot;已删除文件: $file&quot;</span><br><span class="line">    fi</span><br><span class="line">done</span><br></pre></td></tr></table></figure></li>
 </ol>
-<h3 id="优化成果"><a href="#优化成果" class="headerlink" title="优化成果"></a>优化成果</h3><p>之前每天必复现, 连续一周未收到告警<br><img src="/../images/now_502.png" srcset="/img/loading.gif" lazyload alt="img.png"></p>
-
-                
-              </div>
-            
-            <hr/>
-            <div>
-              <div class="post-metas my-3">
-  
-  
-    <div class="post-meta">
-      <i class="iconfont icon-tags"></i>
-      
-        <a href="/tags/Go/" class="print-no-link">#Go</a>
-      
-        <a href="/tags/Nginx/" class="print-no-link">#Nginx</a>
-      
-        <a href="/tags/502/" class="print-no-link">#502</a>
-      
-        <a href="/tags/keepalive/" class="print-no-link">#keepalive</a>
-      
-    </div>
-  
-</div>
-
-
-              
-  
-
-  <div class="license-box my-3">
-    <div class="license-title">
-      <div>go_nginx_502问题排查</div>
-      <div>http://codingwhat.github.io/2022/07/09/go-nginx-502/</div>
-    </div>
-    <div class="license-meta">
-      
-        <div class="license-meta-item">
-          <div>作者</div>
-          <div>codingWhat</div>
-        </div>
-      
-      
-        <div class="license-meta-item license-meta-date">
-          <div>发布于</div>
-          <div>2022年7月9日</div>
-        </div>
-      
-      
-      
-        <div class="license-meta-item">
-          <div>许可协议</div>
-          <div>
-            
-              
-              
-                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
-                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
-                    <i class="iconfont icon-by"></i>
-                  </span>
-                </a>
-              
-            
-          </div>
-        </div>
-      
-    </div>
-    <div class="license-icon iconfont"></div>
-  </div>
-
-
-
-              
-                <div class="post-prevnext my-3">
-                  <article class="post-prev col-6">
-                    
-                    
-                      <a href="/2022/07/17/single-flight-analysis/" title="Single-flight 核心逻辑拆解">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">Single-flight 核心逻辑拆解</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
-                  </article>
-                  <article class="post-next col-6">
-                    
-                    
-                  </article>
-                </div>
-              
-            </div>
-
-            
-  
-  
-    <article id="comments" lazyload>
-      
-  <div id="valine"></div>
-  <script type="text/javascript">
-    Fluid.utils.loadComments('#valine', function() {
-      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
-        var options = Object.assign(
-          {"appId":"bp8GoUBWrJcqrTcWZR7ark7W-gzGzoHsz","appKey":"72QDRB9uHrgahwILCMXUBqo7","path":"window.location.pathname","placeholder":"说点什么","avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
-          {
-            el: "#valine",
-            path: window.location.pathname
-          }
-        )
-        new Valine(options);
-        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
-          var imgSelector = '#valine .vcontent img:not(.vemoji)';
-          Fluid.plugins.imageCaption(imgSelector);
-          Fluid.plugins.fancyBox(imgSelector);
-        })
-      });
-    });
-  </script>
-  <noscript>Please enable JavaScript to view the comments</noscript>
-
-
-    </article>
-  
-
-
-          </article>
-        </div>
-      </div>
-    </div>
-
-    <div class="side-col d-none d-lg-block col-lg-2">
-      
-  <aside class="sidebar" style="margin-left: -1rem">
-    <div id="toc">
-  <p class="toc-header">
-    <i class="iconfont icon-list"></i>
-    <span>目录</span>
-  </p>
-  <div class="toc-body" id="toc-body"></div>
-</div>
-
-
-
-  </aside>
-
-
-    </div>
-  </div>
-</div>
-
-
-
-
-
-  
-
-
-
-  
-
-
-
-  
-
-
-
-  
-
-
-
-  
-
-
-
-
-
-
-
-    
-
-    
-      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
-        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
-      </a>
-    
-
-    
-      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
-     aria-hidden="true">
-  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header text-center">
-        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
-        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body mx-3">
-        <div class="md-form mb-5">
-          <input type="text" id="local-search-input" class="form-control validate">
-          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
-        </div>
-        <div class="list-group" id="local-search-result"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-    
-
-    
-  </main>
-
-  <footer>
-    <div class="footer-inner">
-  
-    <div class="footer-content">
-       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Coding What</span></a> 
-    </div>
-  
-  
-    <div class="statistics">
-  
-  
-
-  
-    
-      <span id="leancloud-site-pv-container" style="display: none">
-        总访问量 
-        <span id="leancloud-site-pv"></span>
-         次
-      </span>
-    
-    
-      <span id="leancloud-site-uv-container" style="display: none">
-        总访客数 
-        <span id="leancloud-site-uv"></span>
-         人
-      </span>
-    
-    
-
-  
-</div>
-
-  
-  
-  
-</div>
-
-  </footer>
-
-  <!-- Scripts -->
-  
-  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
-  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
-
-  <script>
-    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
-    NProgress.start()
-    window.addEventListener('load', function() {
-      NProgress.done();
-    })
-  </script>
-
-
-<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
-<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
-<script  src="/js/events.js" ></script>
-<script  src="/js/plugins.js" ></script>
-
-
-  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
-  <script>
-    (function (window, document) {
-      var typing = Fluid.plugins.typing;
-      var subtitle = document.getElementById('subtitle');
-      if (!subtitle || !typing) {
-        return;
-      }
-      var text = subtitle.getAttribute('data-typed-text');
-      
-        typing(text);
-      
-    })(window, document);
-  </script>
-
-
-
-
-  
-    <script  src="/js/img-lazyload.js" ></script>
-  
-
-
-
-
-  
-<script>
-  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
-    var toc = jQuery('#toc');
-    if (toc.length === 0 || !window.tocbot) { return; }
-    var boardCtn = jQuery('#board-ctn');
-    var boardTop = boardCtn.offset().top;
-
-    window.tocbot.init(Object.assign({
-      tocSelector     : '#toc-body',
-      contentSelector : '.markdown-body',
-      linkClass       : 'tocbot-link',
-      activeLinkClass : 'tocbot-active-link',
-      listClass       : 'tocbot-list',
-      isCollapsedClass: 'tocbot-is-collapsed',
-      collapsibleClass: 'tocbot-is-collapsible',
-      scrollSmooth    : true,
-      includeTitleTags: true,
-      headingsOffset  : -boardTop,
-    }, CONFIG.toc));
-    if (toc.find('.toc-list-item').length > 0) {
-      toc.css('visibility', 'visible');
-    }
-
-    Fluid.events.registerRefreshCallback(function() {
-      if ('tocbot' in window) {
-        tocbot.refresh();
-        var toc = jQuery('#toc');
-        if (toc.length === 0 || !tocbot) {
-          return;
-        }
-        if (toc.find('.toc-list-item').length > 0) {
-          toc.css('visibility', 'visible');
-        }
-      }
-    });
-  });
-</script>
-
-
-  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
-
-  <script>Fluid.plugins.codeWidget();</script>
-
-
-  
-<script>
-  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
-    window.anchors.options = {
-      placement: CONFIG.anchorjs.placement,
-      visible  : CONFIG.anchorjs.visible
-    };
-    if (CONFIG.anchorjs.icon) {
-      window.anchors.options.icon = CONFIG.anchorjs.icon;
-    }
-    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
-    var res = [];
-    for (var item of el) {
-      res.push('.markdown-body > ' + item.trim());
-    }
-    if (CONFIG.anchorjs.placement === 'left') {
-      window.anchors.options.class = 'anchorjs-link-left';
-    }
-    window.anchors.add(res.join(', '));
-
-    Fluid.events.registerRefreshCallback(function() {
-      if ('anchors' in window) {
-        anchors.removeAll();
-        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
-        var res = [];
-        for (var item of el) {
-          res.push('.markdown-body > ' + item.trim());
-        }
-        if (CONFIG.anchorjs.placement === 'left') {
-          anchors.options.class = 'anchorjs-link-left';
-        }
-        anchors.add(res.join(', '));
-      }
-    });
-  });
-</script>
-
-
-  
-<script>
-  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
-    Fluid.plugins.fancyBox();
-  });
-</script>
-
-
-  <script>Fluid.plugins.imageCaption();</script>
-
-  <script defer src="/js/leancloud.js" ></script>
-
-  <script  src="/js/local-search.js" ></script>
-
-
-
-
-
-<!-- 主题的启动项，将它保持在最底部 -->
-<!-- the boot of the theme, keep it at the bottom -->
-<script  src="/js/boot.js" ></script>
-
-
-  
-
-  <noscript>
-    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
-  </noscript>
-</body>
-</html>
+<h3 id="优化成果"><a href="#优化成果" class="headerlink" title="优化成果"></a>优化成果</h3><p>之前每天必复现, 连续一周未收到告警<br><img src="/../images/now_502.png" alt="img.png"></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="http://codingWhat.github.io">codingWhat</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="http://codingwhat.github.io/2022/07/09/go-nginx-502/">http://codingwhat.github.io/2022/07/09/go-nginx-502/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="http://codingWhat.github.io" target="_blank">codingWhat Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Go/">Go</a><a class="post-meta__tags" href="/tags/Nginx/">Nginx</a><a class="post-meta__tags" href="/tags/502/">502</a><a class="post-meta__tags" href="/tags/keepalive/">keepalive</a></div><div class="post-share"><div class="social-share" data-image="/img/butterfly-icon.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/2022/07/17/single-flight-analysis/" title="Single-flight 核心逻辑拆解"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Single-flight 核心逻辑拆解</div></div><div class="info-2"><div class="info-item-1">业务场景中经常会有缓存的身影，虽然缓存给我们带来了诸多好处，但是缓存带来的问题却不容小觑，常见的有缓存雪崩、缓存穿透、缓存击穿。 今天来说说缓存击穿及其解决方案。 问题场景当发生缓存击穿时，瞬时流量会涌入下游服务或者存储造成极大的冲击甚至打挂，此时业务应该如何应对？  解决方案:singleflight, 主要解决了:  流量合并，将N个请求-&gt;1个请求 流量拦截，如果发现已经有inflight请求，会阻塞等待inflight请求返回结果  核心逻辑 抽象同类请求，利用wg去控制阻塞 12345678type call struct &#123;	wg sync.WaitGroup //利用其Wait 阻塞请求	val interface&#123;&#125; // 返回结果，被阻塞请求需要    ## 省略非核心字段&#125; 保存全局瞬时请求 1234type Group struct &#123;	mu sync.Mutex       // protects m	m  map[string]*call // 保存全局请求，lazily initialized&#...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2024/09/19/rwmutex-deadlock/" title="Go RWMutex读锁重入死锁问题深度分析"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2024-09-19</div><div class="info-item-2">Go RWMutex读锁重入死锁问题深度分析</div></div><div class="info-2"><div class="info-item-1"> 本文深度分析Go语言中sync.RWMutex读锁重入导致的死锁问题，通过源码解析和实际案例，揭示问题本质并提供解决方案。    问题场景在高并发业务系统中，错误使用sync.RWMutex的读锁重入机制容易引发死锁。下面通过一个简化的定时统计器案例来复现和分析该问题。 该统计器的核心功能：  Incr方法：外部并发调用，更新统计数据 Run方法：定时任务，将热点数据从data复制到hot切片 stat方法：内部统计逻辑，涉及读锁重入12345678910111213141516171819202122232425262728293031323334353637383940414243444546type Counter struct &#123;	data map[string]int	hot  []string	mu   sync.RWMutex&#125;// stat 统计热点数据 - 存在读锁重入问题func (c *Counter) stat() &#123;	c.mu.RLock() // 读锁重入：外层Run()已持有读锁	defer c.mu.RUnlock(...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/butterfly-icon.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">codingWhat</div><div class="author-info-description">codingWhat Blog</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">12</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">43</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">This is my Blog</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98%E7%8E%B0%E5%9C%BA"><span class="toc-number">1.</span> <span class="toc-text">问题现场</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%97%AE%E9%A2%981-upstream-prematurely-closed-connection"><span class="toc-number">1.1.</span> <span class="toc-text">问题1: upstream prematurely closed connection</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%97%AE%E9%A2%982-listen-backlog-%E8%BF%87%E4%BD%8E"><span class="toc-number">1.2.</span> <span class="toc-text">问题2: listen backlog 过低</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%97%AE%E9%A2%983-%E6%9A%B4%E5%8A%9B%E6%B8%85%E7%90%86nginx%E6%97%A5%E5%BF%97"><span class="toc-number">1.3.</span> <span class="toc-text">问题3: 暴力清理nginx日志</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%98%E5%8C%96%E6%88%90%E6%9E%9C"><span class="toc-number">1.4.</span> <span class="toc-text">优化成果</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2025/08/17/effective-vibe-coding-with-claude/" title="Claude Code高效开发实践指南">Claude Code高效开发实践指南</a><time datetime="2025-08-17T15:22:17.000Z" title="发表于 2025-08-17 23:22:17">2025-08-17</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/09/19/rwmutex-deadlock/" title="Go RWMutex读锁重入死锁问题深度分析">Go RWMutex读锁重入死锁问题深度分析</a><time datetime="2024-09-19T04:09:42.000Z" title="发表于 2024-09-19 12:09:42">2024-09-19</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/08/05/local-cache-go-impl/" title="实现高性能的本地缓存库">实现高性能的本地缓存库</a><time datetime="2024-08-05T14:40:01.000Z" title="发表于 2024-08-05 22:40:01">2024-08-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/07/28/service-avaliable/" title="服务高可用治理系列（一）：SRE理论基础与度量体系">服务高可用治理系列（一）：SRE理论基础与度量体系</a><time datetime="2024-07-28T09:52:10.000Z" title="发表于 2024-07-28 17:52:10">2024-07-28</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/07/17/service-high-available-governance/" title="服务高可用治理系列（二）：技术实现与架构设计实战">服务高可用治理系列（二）：技术实现与架构设计实战</a><time datetime="2024-07-17T08:41:53.000Z" title="发表于 2024-07-17 16:41:53">2024-07-17</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 By codingWhat</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.4.3</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

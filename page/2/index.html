@@ -1,496 +1,283 @@
-
-
-<!DOCTYPE html>
-<html lang="zh-CN" data-default-color-scheme=auto>
-
-
-
-<head>
-  <meta charset="UTF-8">
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
-  <link rel="icon" href="/img/fluid.png">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
-  <meta http-equiv="x-ua-compatible" content="ie=edge">
-  
-  <meta name="theme-color" content="#2f4154">
-  <meta name="author" content="codingWhat">
-  <meta name="keywords" content="evanhan codingWhat 博客 韩伟的博客 系统设计 后端开发">
-  
-    <meta name="description" content="codingWhat Blog">
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>codingWhat Blog - codingWhat Blog</title><meta name="author" content="codingWhat"><meta name="copyright" content="codingWhat"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="codingWhat Blog">
 <meta property="og:type" content="website">
 <meta property="og:title" content="codingWhat Blog">
 <meta property="og:url" content="http://codingwhat.github.io/page/2/index.html">
 <meta property="og:site_name" content="codingWhat Blog">
 <meta property="og:description" content="codingWhat Blog">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://codingwhat.github.io/img/butterfly-icon.png">
 <meta property="article:author" content="codingWhat">
 <meta property="article:tag" content="evanhan codingWhat 博客 韩伟的博客 系统设计 后端开发">
-<meta name="twitter:card" content="summary_large_image">
-  
-  
-  
-  <title>codingWhat Blog</title>
-
-  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
-
-
-
-
-
-<!-- 主题依赖的图标库，不要自行修改 -->
-<!-- Do not modify the link that theme dependent icons -->
-
-<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
-
-
-
-<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
-
-
-<link  rel="stylesheet" href="/css/main.css" />
-
-
-  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
-  
-    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
-  
-
-
-
-
-  <script id="fluid-configs">
-    var Fluid = window.Fluid || {};
-    Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"codingwhat.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"bp8GoUBWrJcqrTcWZR7ark7W-gzGzoHsz","app_key":"72QDRB9uHrgahwILCMXUBqo7","server_url":"https://bp8goubw.lc-cn-n1-shared.com","path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
-
-    if (CONFIG.web_analytics.follow_dnt) {
-      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
-      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://codingwhat.github.io/img/butterfly-icon.png"><script type="application/ld+json"></script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="http://codingwhat.github.io/page/2/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
     }
-  </script>
-  <script  src="/js/utils.js" ></script>
-  <script  src="/js/color-schema.js" ></script>
-  
 
-  
-
-  
-    <!-- Google tag (gtag.js) -->
-    <script async>
-      if (!Fluid.ctx.dnt) {
-        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=", function() {
-          window.dataLayer = window.dataLayer || [];
-          function gtag() {
-            dataLayer.push(arguments);
-          }
-          gtag('js', new Date());
-          gtag('config', '');
-        });
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
       }
-    </script>
+    }
   
-
-  
-
-  
-
-  
-
-  
-    
-  
-
-
-
-  
-<meta name="generator" content="Hexo 7.3.0"></head>
-
-
-<body>
-  
-
-  <header>
-    
-
-<div class="header-inner" style="height: 100vh;">
-  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
-  <div class="container">
-    <a class="navbar-brand" href="/">
-      <strong>Coding What Blog</strong>
-    </a>
-
-    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
-            data-target="#navbarSupportedContent"
-            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-      <div class="animated-icon"><span></span><span></span><span></span></div>
-    </button>
-
-    <!-- Collapsible content -->
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav ml-auto text-center">
-        
-          
-          
-          
-          
-            <li class="nav-item">
-              <a class="nav-link" href="/" target="_self">
-                <i class="iconfont icon-home-fill"></i>
-                <span>首页</span>
-              </a>
-            </li>
-          
-        
-          
-          
-          
-          
-            <li class="nav-item">
-              <a class="nav-link" href="/archives/" target="_self">
-                <i class="iconfont icon-archive-fill"></i>
-                <span>归档</span>
-              </a>
-            </li>
-          
-        
-          
-          
-          
-          
-            <li class="nav-item">
-              <a class="nav-link" href="/categories/" target="_self">
-                <i class="iconfont icon-category-fill"></i>
-                <span>分类</span>
-              </a>
-            </li>
-          
-        
-          
-          
-          
-          
-            <li class="nav-item">
-              <a class="nav-link" href="/tags/" target="_self">
-                <i class="iconfont icon-tags-fill"></i>
-                <span>标签</span>
-              </a>
-            </li>
-          
-        
-          
-          
-          
-          
-            <li class="nav-item">
-              <a class="nav-link" href="/about/" target="_self">
-                <i class="iconfont icon-user-fill"></i>
-                <span>关于</span>
-              </a>
-            </li>
-          
-        
-        
-          <li class="nav-item" id="search-btn">
-            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
-              <i class="iconfont icon-search"></i>
-            </a>
-          </li>
-          
-        
-        
-          <li class="nav-item" id="color-toggle-btn">
-            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
-              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
-            </a>
-          </li>
-        
-      </ul>
-    </div>
-  </div>
-</nav>
-
-  
-
-<div id="banner" class="banner" parallax=true
-     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
-  <div class="full-bg-img">
-    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
-      <div class="banner-text text-center fade-in-up">
-        <div class="h2">
-          
-            <span id="subtitle" data-typed-text="no pain no gain"></span>
-          
-        </div>
-
-        
-      </div>
-
       
-        <div class="scroll-down-bar">
-          <i class="iconfont icon-arrowdown"></i>
-        </div>
-      
-    </div>
-  </div>
-</div>
-
-</div>
-
-  </header>
-
-  <main>
-    
-      <div class="container nopadding-x-md">
-        <div id="board"
-          style="margin-top: 0">
-          
-          <div class="container">
-            <div class="row">
-              <div class="col-12 col-md-10 m-auto">
-                
-
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2022/07/17/single-flight-analysis/" target="_self">
-          Single-flight 核心逻辑拆解
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2022/07/17/single-flight-analysis/" target="_self">
-        <div>
-          业务场景中经常会有缓存的身影，虽然缓存给我们带来了诸多好处，但是缓存带来的问题却不容小觑，常见的有缓存雪崩、缓存穿透、缓存击穿。 今天来说说缓存击穿及其解决方案。 问题场景当发生缓存击穿时，瞬时流量会涌入下游服务或者存储造成极大的冲击甚至打挂，此时业务应该如何应对？
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2022-07-17 16:19" pubdate>
-              2022-07-17
-            </time>
-          </div>
-        
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/GO/">#GO</a>
-            
-              <a href="/tags/%E7%BC%93%E5%AD%98%E5%87%BB%E7%A9%BF/">#缓存击穿</a>
-            
-              <a href="/tags/%E7%BC%93%E5%AD%98%E9%97%AE%E9%A2%98/">#缓存问题</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2022/07/09/go-nginx-502/" target="_self">
-          go_nginx_502问题排查
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2022/07/09/go-nginx-502/" target="_self">
-        <div>
-          线上巡检发现很多502日志，于是就开始了漫漫debug
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2022-07-09 16:35" pubdate>
-              2022-07-09
-            </time>
-          </div>
-        
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/Go/">#Go</a>
-            
-              <a href="/tags/Nginx/">#Nginx</a>
-            
-              <a href="/tags/502/">#502</a>
-            
-              <a href="/tags/keepalive/">#keepalive</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-
-
-  <nav aria-label="navigation">
-    <span class="pagination" id="pagination">
-      <a class="extend prev" rel="prev" href="/"><i class="iconfont icon-arrowleft"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span>
-    </span>
-  </nav>
-
-
-
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    
-
-    
-      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
-        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
-      </a>
-    
-
-    
-      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
-     aria-hidden="true">
-  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header text-center">
-        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
-        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body mx-3">
-        <div class="md-form mb-5">
-          <input type="text" id="local-search-input" class="form-control validate">
-          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
-        </div>
-        <div class="list-group" id="local-search-result"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-    
-
-    
-  </main>
-
-  <footer>
-    <div class="footer-inner">
-  
-    <div class="footer-content">
-       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Coding What</span></a> 
-    </div>
-  
-  
-    <div class="statistics">
-  
-  
-
-  
-    
-      <span id="leancloud-site-pv-container" style="display: none">
-        总访问量 
-        <span id="leancloud-site-pv"></span>
-         次
-      </span>
-    
-    
-      <span id="leancloud-site-uv-container" style="display: none">
-        总访客数 
-        <span id="leancloud-site-uv"></span>
-         人
-      </span>
-    
-    
-
-  
-</div>
-
-  
-  
-  
-</div>
-
-  </footer>
-
-  <!-- Scripts -->
-  
-  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
-  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
-
-  <script>
-    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
-    NProgress.start()
-    window.addEventListener('load', function() {
-      NProgress.done();
-    })
-  </script>
-
-
-<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
-<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
-<script  src="/js/events.js" ></script>
-<script  src="/js/plugins.js" ></script>
-
-
-  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
-  <script>
-    (function (window, document) {
-      var typing = Fluid.plugins.typing;
-      var subtitle = document.getElementById('subtitle');
-      if (!subtitle || !typing) {
-        return;
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
       }
-      var text = subtitle.getAttribute('data-typed-text');
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
       
-        typing(text);
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
       
-    })(window, document);
-  </script>
-
-
-
-
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
   
-    <script  src="/js/img-lazyload.js" ></script>
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":300,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'codingWhat Blog',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'home'
+}</script><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/butterfly-icon.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">12</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">43</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div></div></div></div><div class="page" id="body-wrap"><header class="full_page" id="page-header" style="background-image: url(/images/tech-bg.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">codingWhat Blog</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="site-info"><h1 id="site-title">codingWhat Blog</h1><div id="site-subtitle"><span id="subtitle"></span></div></div><div id="scroll-down"><i class="fas fa-angle-down scroll-down-effects"></i></div></header><main class="layout" id="content-inner"><div class="recent-posts nc" id="recent-posts"><div class="recent-post-items"><div class="recent-post-item"><div class="recent-post-info no-cover"><a class="article-title" href="/2022/07/17/single-flight-analysis/" title="Single-flight 核心逻辑拆解">Single-flight 核心逻辑拆解</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2022-07-17T08:19:03.000Z" title="发表于 2022-07-17 16:19:03">2022-07-17</time></span></div><div class="content">业务场景中经常会有缓存的身影，虽然缓存给我们带来了诸多好处，但是缓存带来的问题却不容小觑，常见的有缓存雪崩、缓存穿透、缓存击穿。 今天来说说缓存击穿及其解决方案。 问题场景当发生缓存击穿时，瞬时流量会涌入下游服务或者存储造成极大的冲击甚至打挂，此时业务应该如何应对？  解决方案:singleflight, 主要解决了:  流量合并，将N个请求-&gt;1个请求 流量拦截，如果发现已经有inflight请求，会阻塞等待inflight请求返回结果  核心逻辑 抽象同类请求，利用wg去控制阻塞 12345678type call struct &#123;	wg sync.WaitGroup //利用其Wait 阻塞请求	val interface&#123;&#125; // 返回结果，被阻塞请求需要    ## 省略非核心字段&#125; 保存全局瞬时请求 1234type Group struct &#123;	mu sync.Mutex       // protects m	m  map[string]*call // 保存全局请求，lazily initialized&#...</div></div></div><div class="recent-post-item"><div class="recent-post-info no-cover"><a class="article-title" href="/2022/07/09/go-nginx-502/" title="go_nginx_502问题排查">go_nginx_502问题排查</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2022-07-09T08:35:08.000Z" title="发表于 2022-07-09 16:35:08">2022-07-09</time></span></div><div class="content"> 线上巡检发现很多502日志，于是就开始了漫漫debug    简单介绍背景  线上服务:   容器部署 http Nginx + Go 服务耗时基本在100ms左右   已做排查，排除服务不可用导致的502问题   服务是否重启 容器是否异常、重启 磁盘、cpu是否异常  问题现场问题1: upstream prematurely closed connection在排查nginx日志时发现如下错误  nginx error log: “upstream prematurely closed connection while reading response header from upstream”  很明显服务主动关闭了连接，httpServer主动关闭连接一般是read&#x2F;write超时了, 但是查看服务配置发现read&#x2F;write分别1s&#x2F;3s, 并且服务逻辑中都有严格的超时控制、没有阻塞逻辑，讲道理不太可能触发，所以这里排除。问题到这里似乎进到死胡同了，这时在看server源码是发现idletimeout这个配置, 如果没有设置默认取rea...</div></div></div></div><nav id="pagination"><div class="pagination"><a class="extend prev" rel="prev" href="/"><i class="fas fa-chevron-left fa-fw"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span></div></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/butterfly-icon.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">codingWhat</div><div class="author-info-description">codingWhat Blog</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">12</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">43</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">This is my Blog</div></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2025/08/17/effective-vibe-coding-with-claude/" title="Claude Code高效开发实践指南">Claude Code高效开发实践指南</a><time datetime="2025-08-17T15:22:17.000Z" title="发表于 2025-08-17 23:22:17">2025-08-17</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/09/19/rwmutex-deadlock/" title="Go RWMutex读锁重入死锁问题深度分析">Go RWMutex读锁重入死锁问题深度分析</a><time datetime="2024-09-19T04:09:42.000Z" title="发表于 2024-09-19 12:09:42">2024-09-19</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/08/05/local-cache-go-impl/" title="实现高性能的本地缓存库">实现高性能的本地缓存库</a><time datetime="2024-08-05T14:40:01.000Z" title="发表于 2024-08-05 22:40:01">2024-08-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/07/28/service-avaliable/" title="服务高可用治理系列（一）：SRE理论基础与度量体系">服务高可用治理系列（一）：SRE理论基础与度量体系</a><time datetime="2024-07-28T09:52:10.000Z" title="发表于 2024-07-28 17:52:10">2024-07-28</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/07/17/service-high-available-governance/" title="服务高可用治理系列（二）：技术实现与架构设计实战">服务高可用治理系列（二）：技术实现与架构设计实战</a><time datetime="2024-07-17T08:41:53.000Z" title="发表于 2024-07-17 16:41:53">2024-07-17</time></div></div></div></div><div class="card-widget card-categories"><div class="item-headline">
+            <i class="fas fa-folder-open"></i>
+            <span>分类</span>
+            
+          </div>
+          <ul class="card-category-list" id="aside-cat-list">
+            <li class="card-category-list-item "><a class="card-category-list-link" href="/categories/Go%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/"><span class="card-category-list-name">Go并发编程</span><span class="card-category-list-count">1</span></a></li><li class="card-category-list-item "><a class="card-category-list-link" href="/categories/%E5%BC%80%E5%8F%91%E5%B7%A5%E5%85%B7/"><span class="card-category-list-name">开发工具</span><span class="card-category-list-count">1</span></a><ul class="card-category-list child"><li class="card-category-list-item "><a class="card-category-list-link" href="/categories/%E5%BC%80%E5%8F%91%E5%B7%A5%E5%85%B7/AI%E7%BC%96%E7%A8%8B/"><span class="card-category-list-name">AI编程</span><span class="card-category-list-count">1</span></a></li></ul></li><li class="card-category-list-item "><a class="card-category-list-link" href="/categories/%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84/"><span class="card-category-list-name">系统架构</span><span class="card-category-list-count">3</span></a><ul class="card-category-list child"><li class="card-category-list-item "><a class="card-category-list-link" href="/categories/%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84/%E6%95%B0%E6%8D%AE%E5%BA%93/"><span class="card-category-list-name">数据库</span><span class="card-category-list-count">1</span></a></li><li class="card-category-list-item "><a class="card-category-list-link" href="/categories/%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84/%E6%9C%8D%E5%8A%A1%E6%B2%BB%E7%90%86/"><span class="card-category-list-name">服务治理</span><span class="card-category-list-count">2</span></a></li></ul></li>
+          </ul></div><div class="card-widget card-tags"><div class="item-headline"><i class="fas fa-tags"></i><span>标签</span></div><div class="card-tag-cloud"><a href="/tags/%E5%8F%AF%E8%A7%82%E6%B5%8B%E6%80%A7/" style="font-size: 1.1em; color: #999">可观测性</a> <a href="/tags/Nginx/" style="font-size: 1.1em; color: #999">Nginx</a> <a href="/tags/pprof/" style="font-size: 1.1em; color: #999">pprof</a> <a href="/tags/%E5%8D%95%E6%9C%BA%E9%99%90%E6%B5%81/" style="font-size: 1.1em; color: #999">单机限流</a> <a href="/tags/%E9%94%99%E8%AF%AF%E9%A2%84%E7%AE%97/" style="font-size: 1.1em; color: #999">错误预算</a> <a href="/tags/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/" style="font-size: 1.1em; color: #999">并发编程</a> <a href="/tags/%E6%AD%BB%E9%94%81/" style="font-size: 1.1em; color: #999">死锁</a> <a href="/tags/%E6%9C%8D%E5%8A%A1%E7%AD%89%E7%BA%A7%E7%9B%AE%E6%A0%87/" style="font-size: 1.1em; color: #999">服务等级目标</a> <a href="/tags/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/" style="font-size: 1.1em; color: #999">架构设计</a> <a href="/tags/Go%E8%B0%83%E5%BA%A6%E5%8E%9F%E7%90%86/" style="font-size: 1.1em; color: #999">Go调度原理</a> <a href="/tags/%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/" style="font-size: 1.1em; color: #999">垃圾回收</a> <a href="/tags/%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" style="font-size: 1.1em; color: #999">最佳实践</a> <a href="/tags/AI%E7%BC%96%E7%A8%8B/" style="font-size: 1.1em; color: #999">AI编程</a> <a href="/tags/%E9%99%90%E6%B5%81%E7%86%94%E6%96%AD/" style="font-size: 1.1em; color: #999">限流熔断</a> <a href="/tags/%E9%9B%86%E7%BE%A4%E9%99%90%E6%B5%81/" style="font-size: 1.1em; color: #999">集群限流</a> <a href="/tags/GO/" style="font-size: 1.5em; color: #99a9bf">GO</a> <a href="/tags/%E5%8F%AF%E7%94%A8%E6%80%A7%E6%B2%BB%E7%90%86/" style="font-size: 1.1em; color: #999">可用性治理</a> <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/" style="font-size: 1.1em; color: #999">分布式系统</a> <a href="/tags/memory/" style="font-size: 1.1em; color: #999">memory</a> <a href="/tags/%E7%BC%93%E5%AD%98%E5%87%BB%E7%A9%BF/" style="font-size: 1.1em; color: #999">缓存击穿</a> <a href="/tags/keepalive/" style="font-size: 1.1em; color: #999">keepalive</a> <a href="/tags/%E9%99%90%E6%B5%81/" style="font-size: 1.1em; color: #999">限流</a> <a href="/tags/LRU/" style="font-size: 1.1em; color: #999">LRU</a> <a href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1%E6%B2%BB%E7%90%86/" style="font-size: 1.1em; color: #999">微服务治理</a> <a href="/tags/%E8%BF%90%E7%BB%B4/" style="font-size: 1.1em; color: #999">运维</a> <a href="/tags/%E9%AB%98%E6%80%A7%E8%83%BD/" style="font-size: 1.1em; color: #999">高性能</a> <a href="/tags/502/" style="font-size: 1.1em; color: #999">502</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93%E8%BF%81%E7%A7%BB/" style="font-size: 1.1em; color: #999">数据库迁移</a> <a href="/tags/MySQL/" style="font-size: 1.1em; color: #999">MySQL</a> <a href="/tags/%E5%BC%80%E5%8F%91%E6%95%88%E7%8E%87/" style="font-size: 1.1em; color: #999">开发效率</a> <a href="/tags/SRE/" style="font-size: 1.1em; color: #999">SRE</a> <a href="/tags/Claude/" style="font-size: 1.1em; color: #999">Claude</a> <a href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8%E6%B2%BB%E7%90%86/" style="font-size: 1.3em; color: #99a1ac">高可用治理</a> <a href="/tags/%E7%BC%93%E5%AD%98%E9%97%AE%E9%A2%98/" style="font-size: 1.1em; color: #999">缓存问题</a> <a href="/tags/GO-GMP/" style="font-size: 1.1em; color: #999">GO-GMP</a> <a href="/tags/%E9%80%83%E9%80%B8%E5%88%86%E6%9E%90/" style="font-size: 1.1em; color: #999">逃逸分析</a> <a href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" style="font-size: 1.1em; color: #999">高可用</a> <a href="/tags/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/" style="font-size: 1.1em; color: #999">性能优化</a> <a href="/tags/RWMutex/" style="font-size: 1.1em; color: #999">RWMutex</a> <a href="/tags/Go/" style="font-size: 1.3em; color: #99a1ac">Go</a></div></div><div class="card-widget card-archives">
+    <div class="item-headline">
+      <i class="fas fa-archive"></i>
+      <span>归档</span>
+      <a class="card-more-btn" href="/archives/"
+            title="查看更多">
+            <i class="fas fa-angle-right"></i>
+          </a>
+    </div>
   
+    <ul class="card-archive-list">
+      
+        <li class="card-archive-list-item">
+          <a class="card-archive-list-link" href="/archives/2025/08/">
+            <span class="card-archive-list-date">
+              八月 2025
+            </span>
+            <span class="card-archive-list-count">1</span>
+          </a>
+        </li>
+      
+        <li class="card-archive-list-item">
+          <a class="card-archive-list-link" href="/archives/2024/09/">
+            <span class="card-archive-list-date">
+              九月 2024
+            </span>
+            <span class="card-archive-list-count">1</span>
+          </a>
+        </li>
+      
+        <li class="card-archive-list-item">
+          <a class="card-archive-list-link" href="/archives/2024/08/">
+            <span class="card-archive-list-date">
+              八月 2024
+            </span>
+            <span class="card-archive-list-count">1</span>
+          </a>
+        </li>
+      
+        <li class="card-archive-list-item">
+          <a class="card-archive-list-link" href="/archives/2024/07/">
+            <span class="card-archive-list-date">
+              七月 2024
+            </span>
+            <span class="card-archive-list-count">3</span>
+          </a>
+        </li>
+      
+        <li class="card-archive-list-item">
+          <a class="card-archive-list-link" href="/archives/2023/08/">
+            <span class="card-archive-list-date">
+              八月 2023
+            </span>
+            <span class="card-archive-list-count">1</span>
+          </a>
+        </li>
+      
+        <li class="card-archive-list-item">
+          <a class="card-archive-list-link" href="/archives/2023/07/">
+            <span class="card-archive-list-date">
+              七月 2023
+            </span>
+            <span class="card-archive-list-count">1</span>
+          </a>
+        </li>
+      
+        <li class="card-archive-list-item">
+          <a class="card-archive-list-link" href="/archives/2022/12/">
+            <span class="card-archive-list-date">
+              十二月 2022
+            </span>
+            <span class="card-archive-list-count">1</span>
+          </a>
+        </li>
+      
+        <li class="card-archive-list-item">
+          <a class="card-archive-list-link" href="/archives/2022/10/">
+            <span class="card-archive-list-date">
+              十月 2022
+            </span>
+            <span class="card-archive-list-count">1</span>
+          </a>
+        </li>
+      
+    </ul>
+  </div><div class="card-widget card-webinfo"><div class="item-headline"><i class="fas fa-chart-line"></i><span>网站信息</span></div><div class="webinfo"><div class="webinfo-item"><div class="item-name">文章数目 :</div><div class="item-count">12</div></div><div class="webinfo-item"><div class="item-name">本站访客数 :</div><div class="item-count" id="busuanzi_value_site_uv"><i class="fa-solid fa-spinner fa-spin"></i></div></div><div class="webinfo-item"><div class="item-name">本站总浏览量 :</div><div class="item-count" id="busuanzi_value_site_pv"><i class="fa-solid fa-spinner fa-spin"></i></div></div><div class="webinfo-item"><div class="item-name">最后更新时间 :</div><div class="item-count" id="last-push-date" data-lastPushDate="2025-08-17T16:38:47.654Z"><i class="fa-solid fa-spinner fa-spin"></i></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 By codingWhat</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.4.3</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>window.typedJSFn = {
+  init: str => {
+    window.typed = new Typed('#subtitle', Object.assign({
+      strings: str,
+      startDelay: 300,
+      typeSpeed: 150,
+      loop: true,
+      backSpeed: 50,
+    }, {"typeSpeed":50,"backSpeed":30,"loop":true,"backDelay":2000,"startDelay":1000}))
+  },
+  run: subtitleType => {
+    if (true) {
+      if (typeof Typed === 'function') {
+        subtitleType()
+      } else {
+        btf.getScript('https://cdn.jsdelivr.net/npm/typed.js/dist/typed.umd.min.js').then(subtitleType)
+      }
+    } else {
+      subtitleType()
+    }
+  },
+  processSubtitle: (content, extraContents = []) => {
+    if (true) {
+      const sub = ["✨ 每一行代码都是一次创造的奇迹","🚀 今天的bug就是明天的feature","💡 用代码点亮世界，用思维改变未来","🌟 编程不是工作，是一场美妙的探险","🎯 优雅的代码，就像诗一样美丽","⚡ 咖啡在手，bug退散！","🏆 每一次调试都是成长的脚印","🌈 生活可能有bug，但我们有debug","🔥 代码如人生，简洁而深刻","💪 今天也要元气满满地写代码呀！","🎨 用技术创造美好，用代码传递温暖","⭐ 保持好奇心，世界就是你的API"].slice()
 
+      if (extraContents.length > 0) {
+        sub.unshift(...extraContents)
+      }
 
+      if (typeof content === 'string') {
+        sub.unshift(content)
+      } else if (Array.isArray(content)) {
+        sub.unshift(...content)
+      }
 
-
-  <script defer src="/js/leancloud.js" ></script>
-
-  <script  src="/js/local-search.js" ></script>
-
-
-
-
-
-<!-- 主题的启动项，将它保持在最底部 -->
-<!-- the boot of the theme, keep it at the bottom -->
-<script  src="/js/boot.js" ></script>
-
-
-  
-
-  <noscript>
-    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
-  </noscript>
-</body>
-</html>
+      sub.length > 0 && typedJSFn.init(sub)
+    } else {
+      document.getElementById('subtitle').textContent = typeof content === 'string' ? content :
+        (Array.isArray(content) && content.length > 0 ? content[0] : '')
+    }
+  }
+}
+btf.addGlobalFn('pjaxSendOnce', () => { typed.destroy() }, 'typedDestroy')
+</script><script>function subtitleType () {
+  typedJSFn.processSubtitle(["✨ 每一行代码都是一次创造的奇迹","🚀 今天的bug就是明天的feature","💡 用代码点亮世界，用思维改变未来","🌟 编程不是工作，是一场美妙的探险","🎯 优雅的代码，就像诗一样美丽","⚡ 咖啡在手，bug退散！","🏆 每一次调试都是成长的脚印","🌈 生活可能有bug，但我们有debug","🔥 代码如人生，简洁而深刻","💪 今天也要元气满满地写代码呀！","🎨 用技术创造美好，用代码传递温暖","⭐ 保持好奇心，世界就是你的API"])
+}
+typedJSFn.run(subtitleType)</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
