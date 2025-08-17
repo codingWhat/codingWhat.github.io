@@ -1,0 +1,1091 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="codingWhat">
+  <meta name="keywords" content="evanhan codingWhat 博客 韩伟的博客 系统设计 后端开发">
+  
+    <meta name="description" content="本文是服务高可用治理系列的第一篇，重点介绍SRE理论基础、可用性度量体系和监控告警设计。系列第二篇将深入探讨具体的技术实现和架构设计。  服务高可用治理系列（一）：SRE理论基础与度量体系核心概念定义服务可用性的量化指标服务可用性在工程实践中通常采用以下公式进行量化： 1可用性 &#x3D; MTTF &#x2F; (MTTR + MTTF) × 100%  关键指标解释：  **MTTF (Mean Time T">
+<meta property="og:type" content="article">
+<meta property="og:title" content="服务高可用治理系列（一）：SRE理论基础与度量体系">
+<meta property="og:url" content="http://codingwhat.github.io/2024/07/28/service-avaliable/index.html">
+<meta property="og:site_name" content="codingWhat Blog">
+<meta property="og:description" content="本文是服务高可用治理系列的第一篇，重点介绍SRE理论基础、可用性度量体系和监控告警设计。系列第二篇将深入探讨具体的技术实现和架构设计。  服务高可用治理系列（一）：SRE理论基础与度量体系核心概念定义服务可用性的量化指标服务可用性在工程实践中通常采用以下公式进行量化： 1可用性 &#x3D; MTTF &#x2F; (MTTR + MTTF) × 100%  关键指标解释：  **MTTF (Mean Time T">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://codingwhat.github.io/images/available_metric.png">
+<meta property="og:image" content="http://codingwhat.github.io/images/sa_fail_type.png">
+<meta property="og:image" content="http://codingwhat.github.io/images/sa_formula.png">
+<meta property="og:image" content="http://codingwhat.github.io/images/sa_mttr_detail.png">
+<meta property="og:image" content="http://codingwhat.github.io/images/sa_pre_handle_fail_and_fail_identify_solve.png">
+<meta property="og:image" content="http://codingwhat.github.io/images/sa_pre_online.png">
+<meta property="og:image" content="http://codingwhat.github.io/images/sa_fail_identify.png">
+<meta property="og:image" content="http://codingwhat.github.io/images/sa_fail_solve.png">
+<meta property="og:image" content="http://codingwhat.github.io/images/sa_process.png">
+<meta property="article:published_time" content="2024-07-28T09:52:10.000Z">
+<meta property="article:modified_time" content="2025-08-17T15:25:40.481Z">
+<meta property="article:author" content="codingWhat">
+<meta property="article:tag" content="高可用治理">
+<meta property="article:tag" content="SRE">
+<meta property="article:tag" content="服务等级目标">
+<meta property="article:tag" content="错误预算">
+<meta property="article:tag" content="可观测性">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://codingwhat.github.io/images/available_metric.png">
+  
+  
+  
+  <title>服务高可用治理系列（一）：SRE理论基础与度量体系 - codingWhat Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"codingwhat.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"bp8GoUBWrJcqrTcWZR7ark7W-gzGzoHsz","app_key":"72QDRB9uHrgahwILCMXUBqo7","server_url":"https://bp8goubw.lc-cn-n1-shared.com","path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', '');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Coding What Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="服务高可用治理系列（一）：SRE理论基础与度量体系"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-07-28 17:52" pubdate>
+          2024年7月28日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          35 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">服务高可用治理系列（一）：SRE理论基础与度量体系</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <blockquote>
+<p>本文是服务高可用治理系列的第一篇，重点介绍SRE理论基础、可用性度量体系和监控告警设计。系列第二篇将深入探讨具体的技术实现和架构设计。</p>
+</blockquote>
+<h1 id="服务高可用治理系列（一）：SRE理论基础与度量体系"><a href="#服务高可用治理系列（一）：SRE理论基础与度量体系" class="headerlink" title="服务高可用治理系列（一）：SRE理论基础与度量体系"></a>服务高可用治理系列（一）：SRE理论基础与度量体系</h1><h2 id="核心概念定义"><a href="#核心概念定义" class="headerlink" title="核心概念定义"></a>核心概念定义</h2><h3 id="服务可用性的量化指标"><a href="#服务可用性的量化指标" class="headerlink" title="服务可用性的量化指标"></a>服务可用性的量化指标</h3><p>服务可用性在工程实践中通常采用以下公式进行量化：</p>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs gcode">可用性 = MTTF / <span class="hljs-comment">(MTTR + MTTF)</span> × <span class="hljs-number">100</span><span class="hljs-meta">%</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>关键指标解释：</strong></p>
+<ul>
+<li>**MTTF (Mean Time To Failure)**：平均无故障时间，衡量系统稳定性的核心指标</li>
+<li>**MTTR (Mean Time To Repair)**：平均故障修复时间，反映系统故障恢复能力</li>
+<li>**MTBF (Mean Time Between Failures)**：平均故障间隔时间，MTBF &#x3D; MTTF + MTTR</li>
+</ul>
+<p><strong>指标意义：</strong></p>
+<ul>
+<li>MTTF越长表示系统稳定性越好，故障发生频率越低</li>
+<li>MTTR越短表示系统容错能力越强，故障恢复速度越快<br><img src="/images/available_metric.png" srcset="/img/loading.gif" lazyload alt="MTTF、MTTR、MTBF"></li>
+</ul>
+<h2 id="服务可用性的业务价值"><a href="#服务可用性的业务价值" class="headerlink" title="服务可用性的业务价值"></a>服务可用性的业务价值</h2><p>服务可用性直接关系到业务连续性和用户体验，其影响具有多维度的传导效应：</p>
+<h3 id="用户体验层面"><a href="#用户体验层面" class="headerlink" title="用户体验层面"></a>用户体验层面</h3><ul>
+<li><strong>用户流失</strong>：频繁的服务中断导致用户信任度下降，最终导致用户流失</li>
+<li><strong>品牌认知</strong>：系统稳定性直接影响品牌在用户心中的可靠性认知</li>
+<li><strong>使用黏性</strong>：不稳定的服务体验会降低用户的使用频率和依赖度</li>
+</ul>
+<h3 id="商业价值层面"><a href="#商业价值层面" class="headerlink" title="商业价值层面"></a>商业价值层面</h3><ul>
+<li><strong>直接收入损失</strong>：服务中断期间的交易损失和订单流失</li>
+<li><strong>间接成本增加</strong>：客服处理投诉、技术团队加班修复的人力成本</li>
+<li><strong>市场竞争力</strong>：在同质化竞争中，系统稳定性成为关键差异化优势</li>
+<li><strong>合规风险</strong>：对于金融、医疗等行业，服务中断可能面临监管处罚</li>
+</ul>
+<h3 id="技术团队影响"><a href="#技术团队影响" class="headerlink" title="技术团队影响"></a>技术团队影响</h3><ul>
+<li><strong>研发效率</strong>：频繁的线上故障打断正常的开发节奏</li>
+<li><strong>团队士气</strong>：长期的故障压力影响团队的工作积极性</li>
+<li><strong>技术债务</strong>：为快速修复而引入的临时方案可能累积技术债务</li>
+</ul>
+<p>因此，<strong>服务可用性是技术团队的核心KPI之一，需要从组织架构、技术架构、流程规范等多个维度进行系统性保障</strong>。</p>
+<h2 id="故障分类与根因分析"><a href="#故障分类与根因分析" class="headerlink" title="故障分类与根因分析"></a>故障分类与根因分析</h2><p><img src="/images/sa_fail_type.png" srcset="/img/loading.gif" lazyload alt="故障种类"></p>
+<p>根据故障触发机制和影响范围，系统故障可分为以下五个主要类别：</p>
+<h3 id="1-变更类故障（主动触发）"><a href="#1-变更类故障（主动触发）" class="headerlink" title="1. 变更类故障（主动触发）"></a>1. 变更类故障（主动触发）</h3><ul>
+<li><strong>代码发布</strong>：新功能上线引入的bug或兼容性问题</li>
+<li><strong>配置变更</strong>：数据库配置、服务配置修改导致的异常</li>
+<li><strong>基础设施变更</strong>：网络、存储、计算资源调整引起的问题</li>
+</ul>
+<h3 id="2-容量类故障（被动触发）"><a href="#2-容量类故障（被动触发）" class="headerlink" title="2. 容量类故障（被动触发）"></a>2. 容量类故障（被动触发）</h3><ul>
+<li><strong>流量突增</strong>：突发流量超过系统处理能力</li>
+<li><strong>资源不足</strong>：CPU、内存、磁盘、网络带宽瓶颈</li>
+<li><strong>依赖服务过载</strong>：下游服务响应延迟或拒绝服务</li>
+</ul>
+<h3 id="3-依赖类故障（外部因素）"><a href="#3-依赖类故障（外部因素）" class="headerlink" title="3. 依赖类故障（外部因素）"></a>3. 依赖类故障（外部因素）</h3><ul>
+<li><strong>第三方服务异常</strong>：支付、短信、CDN等外部服务故障</li>
+<li><strong>基础设施故障</strong>：云服务商、IDC、网络运营商问题</li>
+<li><strong>数据库异常</strong>：主从切换、连接池耗尽、慢查询</li>
+</ul>
+<h3 id="4-环境类故障（不可抗力）"><a href="#4-环境类故障（不可抗力）" class="headerlink" title="4. 环境类故障（不可抗力）"></a>4. 环境类故障（不可抗力）</h3><ul>
+<li><strong>硬件故障</strong>：服务器、网络设备、存储设备损坏</li>
+<li><strong>自然灾害</strong>：机房断电、网络中断、地震等极端情况</li>
+</ul>
+<h3 id="5-人为类故障（操作失误）"><a href="#5-人为类故障（操作失误）" class="headerlink" title="5. 人为类故障（操作失误）"></a>5. 人为类故障（操作失误）</h3><ul>
+<li><strong>误操作</strong>：错误的运维命令、数据误删除</li>
+<li><strong>权限问题</strong>：访问控制配置错误</li>
+<li><strong>流程违规</strong>：未经测试的紧急上线</li>
+</ul>
+<p><strong>故障预防策略：</strong> 变更类故障可通过完善的CI&#x2F;CD流程和灰度发布机制预防；其他类型故障需要通过监控告警、容量规划、容错设计等手段降低影响。</p>
+<h1 id="可用性度量体系"><a href="#可用性度量体系" class="headerlink" title="可用性度量体系"></a>可用性度量体系</h1><p><img src="/images/sa_formula.png" srcset="/img/loading.gif" lazyload alt="可用性衡量"></p>
+<h2 id="MTTR细化分解"><a href="#MTTR细化分解" class="headerlink" title="MTTR细化分解"></a>MTTR细化分解</h2><p>平均故障修复时间(MTTR)是可用性优化的核心指标，可进一步分解为三个子阶段：</p>
+<h3 id="MTTI-Mean-Time-To-Identify-故障发现时间"><a href="#MTTI-Mean-Time-To-Identify-故障发现时间" class="headerlink" title="MTTI (Mean Time To Identify) - 故障发现时间"></a>MTTI (Mean Time To Identify) - 故障发现时间</h3><p><strong>定义：</strong> 从故障发生到被监控系统或人员发现的平均时间</p>
+<p><strong>影响因素：</strong></p>
+<ul>
+<li>监控覆盖度和告警策略的完善程度</li>
+<li>告警阈值设置的合理性</li>
+<li>多渠道故障发现机制（内部监控、用户反馈、舆情监控）</li>
+</ul>
+<p><strong>优化方向：</strong></p>
+<ul>
+<li>建立立体化监控体系（基础设施、应用、业务指标）</li>
+<li>实现智能告警，减少误报和漏报</li>
+<li>建立用户反馈快速响应机制</li>
+</ul>
+<h3 id="MTTK-Mean-Time-To-Know-故障定位时间"><a href="#MTTK-Mean-Time-To-Know-故障定位时间" class="headerlink" title="MTTK (Mean Time To Know) - 故障定位时间"></a>MTTK (Mean Time To Know) - 故障定位时间</h3><p><strong>定义：</strong> 从故障被发现到确定根本原因的平均时间</p>
+<p><strong>包含环节：</strong></p>
+<ul>
+<li>故障分级和责任人确定</li>
+<li>业务影响范围评估</li>
+<li>技术根因分析和定位</li>
+</ul>
+<p><strong>优化方向：</strong></p>
+<ul>
+<li>完善故障响应流程和责任矩阵</li>
+<li>建设分布式链路追踪和日志聚合系统</li>
+<li>构建故障知识库和诊断工具</li>
+</ul>
+<h3 id="MTTS-Mean-Time-To-Solve-故障解决时间"><a href="#MTTS-Mean-Time-To-Solve-故障解决时间" class="headerlink" title="MTTS (Mean Time To Solve) - 故障解决时间"></a>MTTS (Mean Time To Solve) - 故障解决时间</h3><p><strong>定义：</strong> 从确定故障原因到完全修复并验证的平均时间</p>
+<p><strong>关键环节：</strong></p>
+<ul>
+<li>修复方案制定和评估</li>
+<li>代码修复或配置调整</li>
+<li>发布部署和效果验证</li>
+</ul>
+<p><strong>优化方向：</strong></p>
+<ul>
+<li>建立快速回滚和热修复机制</li>
+<li>完善自动化部署和验证流程</li>
+<li>预案库建设和演练</li>
+</ul>
+<p><img src="/images/sa_mttr_detail.png" srcset="/img/loading.gif" lazyload alt="MTTR细节"></p>
+<p><strong>公式关系：</strong> MTTR &#x3D; MTTI + MTTK + MTTS，优化任一环节都能提升整体可用性。</p>
+<h2 id="可用性提升策略"><a href="#可用性提升策略" class="headerlink" title="可用性提升策略"></a>可用性提升策略</h2><p>基于可用性量化公式分析，提升系统可用性存在两个核心优化方向：</p>
+<h3 id="战略目标"><a href="#战略目标" class="headerlink" title="战略目标"></a>战略目标</h3><ol>
+<li><strong>增加MTTF</strong>：通过预防性措施减少故障发生频率</li>
+<li><strong>缩短MTTR</strong>：通过快速响应机制减少故障恢复时间</li>
+</ol>
+<h3 id="具体实施路径"><a href="#具体实施路径" class="headerlink" title="具体实施路径"></a>具体实施路径</h3><ul>
+<li><strong>故障预防</strong>：从源头减少故障数量，提高系统稳定性</li>
+<li><strong>快速发现</strong>：缩短MTTI，实现故障的秒级感知</li>
+<li><strong>高效定位</strong>：缩短MTTK，快速确定故障根因</li>
+<li><strong>敏捷修复</strong>：缩短MTTS，实现故障的快速恢复</li>
+</ul>
+<p><img src="/images/sa_pre_handle_fail_and_fail_identify_solve.png" srcset="/img/loading.gif" lazyload alt="提升可用性"></p>
+<h3 id="全生命周期保障体系"><a href="#全生命周期保障体系" class="headerlink" title="全生命周期保障体系"></a>全生命周期保障体系</h3><p>结合软件研发生命周期，建立**”事前预防、事中响应、事后改进”**的三阶段可用性保障体系：</p>
+<ul>
+<li><strong>事前阶段</strong>：通过架构设计、代码质量、测试验证等手段预防故障</li>
+<li><strong>事中阶段</strong>：通过监控告警、快速响应、应急处置等手段快速恢复</li>
+<li><strong>事后阶段</strong>：通过故障复盘、根因分析、流程改进等手段避免重复</li>
+</ul>
+<h3 id="事前预防：构建高可用架构基础"><a href="#事前预防：构建高可用架构基础" class="headerlink" title="事前预防：构建高可用架构基础"></a>事前预防：构建高可用架构基础</h3><p><img src="/images/sa_pre_online.png" srcset="/img/loading.gif" lazyload alt="上线前 + 上线中"></p>
+<h4 id="1-代码质量保障"><a href="#1-代码质量保障" class="headerlink" title="1. 代码质量保障"></a>1. 代码质量保障</h4><p><strong>静态代码分析：</strong></p>
+<ul>
+<li>建立统一的编码规范和最佳实践</li>
+<li>集成SonarQube等工具进行代码质量门禁</li>
+<li>配置ESLint、Checkstyle等静态检查工具</li>
+</ul>
+<p><strong>Code Review机制：</strong></p>
+<ul>
+<li>强制代码审查，至少需要一位资深工程师批准</li>
+<li>重点关注异常处理、资源释放、并发安全等关键逻辑</li>
+<li>建立Review Checklist，确保审查标准化</li>
+</ul>
+<h4 id="2-高可用架构设计"><a href="#2-高可用架构设计" class="headerlink" title="2. 高可用架构设计"></a>2. 高可用架构设计</h4><p><strong>系统解耦：</strong></p>
+<ul>
+<li><strong>异步处理</strong>：采用消息队列(Kafka&#x2F;RabbitMQ)实现系统间解耦</li>
+<li><strong>削峰填谷</strong>：通过缓冲机制平滑流量波动</li>
+<li><strong>服务拆分</strong>：按业务域进行微服务拆分，避免单点故障</li>
+</ul>
+<p><strong>可扩展性设计：</strong></p>
+<ul>
+<li><strong>无状态化</strong>：应用层无状态，支持水平扩展</li>
+<li><strong>分层架构</strong>：清晰的分层设计，便于局部优化和故障隔离</li>
+<li><strong>数据分片</strong>：数据库分库分表，避免单库成为瓶颈</li>
+</ul>
+<h4 id="3-容错机制设计"><a href="#3-容错机制设计" class="headerlink" title="3. 容错机制设计"></a>3. 容错机制设计</h4><p><strong>流量控制：</strong></p>
+<ul>
+<li><strong>限流</strong>：基于令牌桶&#x2F;漏桶算法实现接口级限流</li>
+<li><strong>熔断</strong>：Circuit Breaker模式，快速失败避免雪崩</li>
+<li><strong>降级</strong>：核心功能优先，非核心功能可降级处理</li>
+</ul>
+<p><strong>重试与隔离：</strong></p>
+<ul>
+<li><strong>智能重试</strong>：指数退避算法，避免重试风暴</li>
+<li><strong>资源隔离</strong>：线程池、连接池隔离，避免相互影响</li>
+<li><strong>故障隔离</strong>：故障域隔离，避免故障扩散</li>
+</ul>
+<p><strong>兼容性保障：</strong></p>
+<ul>
+<li><strong>向前兼容</strong>：API版本化管理，保证历史版本可用</li>
+<li><strong>灰度兼容</strong>：新老版本并存期间的兼容性处理</li>
+</ul>
+<blockquote>
+<p>具体的技术实现和架构设计详见系列第二篇：<a href="https://codingwhat.github.io/2024/07/17/service-high-available-governance/">《服务高可用治理系列（二）：技术实现与架构设计实战》</a></p>
+</blockquote>
+<h4 id="4-容量规划与评估"><a href="#4-容量规划与评估" class="headerlink" title="4. 容量规划与评估"></a>4. 容量规划与评估</h4><p><strong>流量预测：</strong></p>
+<ul>
+<li><strong>历史数据分析</strong>：基于历史流量模式进行趋势预测</li>
+<li><strong>业务活动评估</strong>：提前识别营销活动、节假日等流量峰值</li>
+<li><strong>容量建模</strong>：建立容量模型，量化资源需求</li>
+</ul>
+<p><strong>弹性伸缩：</strong></p>
+<ul>
+<li><strong>水平扩展</strong>：基于CPU、内存、QPS等指标自动扩缩容</li>
+<li><strong>垂直扩展</strong>：单机资源的动态调整</li>
+<li><strong>预留缓冲</strong>：保持20-30%的容量buffer应对突发流量</li>
+</ul>
+<h4 id="5-测试验证体系"><a href="#5-测试验证体系" class="headerlink" title="5. 测试验证体系"></a>5. 测试验证体系</h4><p><strong>测试金字塔：</strong></p>
+<ul>
+<li><strong>单元测试</strong>：覆盖率&gt;80%，保证核心逻辑正确性</li>
+<li><strong>集成测试</strong>：验证服务间协作的正确性</li>
+<li><strong>端到端测试</strong>：模拟真实用户场景进行功能验证</li>
+</ul>
+<p><strong>专项测试：</strong></p>
+<ul>
+<li><strong>性能测试</strong>：负载测试、压力测试、稳定性测试</li>
+<li><strong>兼容性测试</strong>：跨版本、跨平台、跨浏览器兼容性</li>
+<li><strong>混沌工程</strong>：主动注入故障，验证系统容错能力</li>
+</ul>
+<h4 id="6-变更管控机制"><a href="#6-变更管控机制" class="headerlink" title="6. 变更管控机制"></a>6. 变更管控机制</h4><p><strong>发布策略：</strong></p>
+<ul>
+<li><strong>蓝绿部署</strong>：无缝切换，快速回滚</li>
+<li><strong>金丝雀发布</strong>：小流量验证，逐步放量</li>
+<li><strong>分批发布</strong>：按机房、按比例分批发布</li>
+</ul>
+<p><strong>三项基本原则：</strong></p>
+<ul>
+<li><strong>可监控</strong>：实时监控关键指标，及时发现异常</li>
+<li><strong>可灰度</strong>：支持灰度发布，控制影响范围</li>
+<li><strong>可回滚</strong>：一键回滚机制，快速恢复服务</li>
+</ul>
+<h3 id="事中响应：快速故障处置机制"><a href="#事中响应：快速故障处置机制" class="headerlink" title="事中响应：快速故障处置机制"></a>事中响应：快速故障处置机制</h3><p><img src="/images/sa_fail_identify.png" srcset="/img/loading.gif" lazyload alt="故障监测"></p>
+<h4 id="1-故障发现机制-MTTI优化"><a href="#1-故障发现机制-MTTI优化" class="headerlink" title="1. 故障发现机制 (MTTI优化)"></a>1. 故障发现机制 (MTTI优化)</h4><p><strong>内部监控体系：</strong></p>
+<ul>
+<li><strong>基础设施监控</strong>：CPU、内存、磁盘、网络等资源指标</li>
+<li><strong>应用层监控</strong>：QPS、响应时间、错误率、线程池状态</li>
+<li><strong>业务指标监控</strong>：订单量、支付成功率、用户活跃度等核心业务指标</li>
+<li><strong>日志监控</strong>：错误日志、异常堆栈的实时分析</li>
+</ul>
+<p><strong>外部感知渠道：</strong></p>
+<ul>
+<li><strong>用户反馈</strong>：客服系统、反馈平台的实时监控</li>
+<li><strong>舆情监控</strong>：社交媒体、新闻媒体的负面信息监控</li>
+<li><strong>第三方监控</strong>：外部拨测、用户行为分析</li>
+</ul>
+<h4 id="2-故障定位机制-MTTK优化"><a href="#2-故障定位机制-MTTK优化" class="headerlink" title="2. 故障定位机制 (MTTK优化)"></a>2. 故障定位机制 (MTTK优化)</h4><p><strong>可观测性三要素：</strong></p>
+<ul>
+<li><strong>Metrics</strong>：时间序列指标，快速定位性能问题</li>
+<li><strong>Logging</strong>：结构化日志，详细记录请求处理过程</li>
+<li><strong>Tracing</strong>：分布式链路追踪，端到端请求链路可视化</li>
+</ul>
+<h4 id="3-故障处置机制-MTTS优化"><a href="#3-故障处置机制-MTTS优化" class="headerlink" title="3. 故障处置机制 (MTTS优化)"></a>3. 故障处置机制 (MTTS优化)</h4><p><img src="/images/sa_fail_solve.png" srcset="/img/loading.gif" lazyload alt="故障解决"></p>
+<p><strong>应急响应策略：</strong></p>
+<ul>
+<li><strong>回滚</strong>：一键回滚到最近稳定版本</li>
+<li><strong>下线</strong>：摘除故障节点，避免影响整体服务</li>
+<li><strong>扩容</strong>：水平扩展计算资源，应对流量洪峰</li>
+<li><strong>切换</strong>：主备切换、多机房容灾切换</li>
+<li><strong>限流</strong>：基于服务、接口、用户等维度的精细化限流</li>
+<li><strong>熔断</strong>：自动或手动熔断异常依赖，防止故障传播</li>
+<li><strong>降级</strong>：关闭非核心功能，保障核心业务正常运行</li>
+<li><strong>热修复</strong>：在线代码修复，无需重启服务</li>
+</ul>
+<h3 id="事后改进：故障复盘与持续优化"><a href="#事后改进：故障复盘与持续优化" class="headerlink" title="事后改进：故障复盘与持续优化"></a>事后改进：故障复盘与持续优化</h3><h4 id="1-故障复盘流程"><a href="#1-故障复盘流程" class="headerlink" title="1. 故障复盘流程"></a>1. 故障复盘流程</h4><p><strong>时间线重建：</strong></p>
+<ul>
+<li><strong>故障发生时间</strong>：精确到分钟级的故障时间线</li>
+<li><strong>关键操作记录</strong>：每个处置动作的时间点和负责人</li>
+<li><strong>影响范围评估</strong>：用户影响数量、业务损失量化</li>
+<li><strong>恢复时间节点</strong>：各阶段恢复情况的详细记录</li>
+</ul>
+<p><strong>根因分析 (5 Whys方法)：</strong></p>
+<ul>
+<li><strong>表面现象</strong>：用户看到的故障表现</li>
+<li><strong>直接原因</strong>：导致故障的直接技术原因</li>
+<li><strong>根本原因</strong>：为什么会发生这个技术原因</li>
+<li><strong>管理原因</strong>：流程、制度、工具层面的缺失</li>
+<li><strong>文化原因</strong>：组织和文化层面的深层次问题</li>
+</ul>
+<h4 id="2-知识沉淀与传承"><a href="#2-知识沉淀与传承" class="headerlink" title="2. 知识沉淀与传承"></a>2. 知识沉淀与传承</h4><p><strong>文档沉淀：</strong></p>
+<ul>
+<li><strong>故障案例库</strong>：典型故障案例和处理经验</li>
+<li><strong>应急预案</strong>：不同类型故障的标准处置流程</li>
+<li><strong>技术方案库</strong>：经过验证的技术解决方案</li>
+<li><strong>最佳实践</strong>：团队在实践中总结的最佳实践</li>
+</ul>
+<p><img src="/images/sa_process.png" srcset="/img/loading.gif" lazyload alt="稳定性各环节"></p>
+<h1 id="服务质量指标体系与SRE实践"><a href="#服务质量指标体系与SRE实践" class="headerlink" title="服务质量指标体系与SRE实践"></a>服务质量指标体系与SRE实践</h1><h2 id="SLA-SLO-SLI三要素"><a href="#SLA-SLO-SLI三要素" class="headerlink" title="SLA&#x2F;SLO&#x2F;SLI三要素"></a>SLA&#x2F;SLO&#x2F;SLI三要素</h2><p>在现代SRE(Site Reliability Engineering)实践中，服务质量管理围绕三个核心概念展开：</p>
+<h3 id="SLA-Service-Level-Agreement-服务等级协议"><a href="#SLA-Service-Level-Agreement-服务等级协议" class="headerlink" title="SLA (Service Level Agreement) - 服务等级协议"></a>SLA (Service Level Agreement) - 服务等级协议</h3><p><strong>定义：</strong> 与用户或客户签署的正式协议，明确服务质量承诺和违约责任</p>
+<p><strong>特点：</strong></p>
+<ul>
+<li><strong>法律约束力</strong>：具有合同效力，违约需要承担经济责任</li>
+<li><strong>外部承诺</strong>：面向客户的正式承诺</li>
+<li><strong>商业导向</strong>：平衡用户期望和成本投入</li>
+</ul>
+<p><strong>示例：</strong> <a target="_blank" rel="noopener" href="https://cloud.tencent.com/document/product/301/103169#63ee1985-f56f-4629-afbf-cafde690ca64">腾讯云SLA协议</a>规定云服务器月度可用性99.95%，不达标按比例赔偿。</p>
+<h3 id="SLO-Service-Level-Objective-服务等级目标"><a href="#SLO-Service-Level-Objective-服务等级目标" class="headerlink" title="SLO (Service Level Objective) - 服务等级目标"></a>SLO (Service Level Objective) - 服务等级目标</h3><p><strong>定义：</strong> 内部设定的服务质量目标，是具体的、可量化的指标阈值</p>
+<h3 id="SLI-Service-Level-Indicator-服务等级指示器"><a href="#SLI-Service-Level-Indicator-服务等级指示器" class="headerlink" title="SLI (Service Level Indicator) - 服务等级指示器"></a>SLI (Service Level Indicator) - 服务等级指示器</h3><p><strong>定义：</strong> 用于衡量服务质量的具体指标，是可观测和可量化的技术指标</p>
+<p><strong>三者关系示例：</strong></p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">SLI</span>: API请求成功率<br><span class="hljs-attribute">SLO</span>: API请求成功率 ≥ <span class="hljs-number">99</span>.<span class="hljs-number">9</span>%<br><span class="hljs-attribute">SLA</span>: 月度API请求成功率低于<span class="hljs-number">99</span>.<span class="hljs-number">5</span>%时，按服务费用<span class="hljs-number">10</span>%赔偿<br></code></pre></td></tr></table></figure>
+
+<h2 id="服务质量指标制定方法论"><a href="#服务质量指标制定方法论" class="headerlink" title="服务质量指标制定方法论"></a>服务质量指标制定方法论</h2><h3 id="“几个9”的选择不是拍脑袋决定"><a href="#“几个9”的选择不是拍脑袋决定" class="headerlink" title="“几个9”的选择不是拍脑袋决定"></a>“几个9”的选择不是拍脑袋决定</h3><p>不同可用性等级对应的年度停机时间：</p>
+<ul>
+<li>**99.9%**：年停机时间约8.77小时</li>
+<li>**99.99%**：年停机时间约52.6分钟</li>
+<li>**99.999%**：年停机时间约5.26分钟</li>
+</ul>
+<h3 id="SLI指标选择原则"><a href="#SLI指标选择原则" class="headerlink" title="SLI指标选择原则"></a>SLI指标选择原则</h3><p><strong>注意：</strong> 传统的”服务可用时间”指标存在歧义（参考<a target="_blank" rel="noopener" href="https://sre.google/sre-book/embracing-risk/">Google SRE: 拥抱风险</a>），实际工程中更多采用面向用户体验的SLI。</p>
+<p><strong>常见SLI指标类型：</strong></p>
+<p><strong>1. 可用性指标</strong>：请求成功率、健康检查成功率<br><strong>2. 延迟指标</strong>：P99响应时间、P95响应时间<br><strong>3. 吞吐量指标</strong>：QPS处理能力、并发连接数<br><strong>4. 质量指标</strong>：数据准确性、功能完整性</p>
+<p><strong>业务场景的SLI选择：</strong></p>
+<ul>
+<li><strong>API网关服务</strong>：主要关注请求成功率、P99延迟、QPS吞吐</li>
+<li><strong>消息推送系统</strong>：主要关注推送到达率、推送延迟、推送成功率</li>
+<li><strong>数据处理服务</strong>：主要关注数据处理准确率、处理延迟、吞吐量</li>
+<li><strong>实时音视频服务</strong>：主要关注连接成功率、音视频质量、延迟</li>
+</ul>
+<h3 id="错误预算机制"><a href="#错误预算机制" class="headerlink" title="错误预算机制"></a>错误预算机制</h3><p><strong>错误预算计算：</strong></p>
+<figure class="highlight abnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs abnf">错误预算 <span class="hljs-operator">=</span> (<span class="hljs-number">1</span> - SLO) × 总请求量<br></code></pre></td></tr></table></figure>
+
+<p><strong>错误预算的作用：</strong></p>
+<ul>
+<li><strong>产品迭代决策</strong>：预算充足时可以快速迭代新功能</li>
+<li><strong>稳定性投入</strong>：预算不足时优先投入稳定性改进</li>
+<li><strong>风险评估</strong>：量化新功能发布的风险成本</li>
+</ul>
+<h2 id="系列总结与下篇预告"><a href="#系列总结与下篇预告" class="headerlink" title="系列总结与下篇预告"></a>系列总结与下篇预告</h2><p>本文作为服务高可用治理系列的第一篇，建立了完整的SRE理论基础：</p>
+<h3 id="核心要点回顾"><a href="#核心要点回顾" class="headerlink" title="核心要点回顾"></a>核心要点回顾</h3><ol>
+<li><strong>量化度量体系</strong>：基于MTTF&#x2F;MTTR构建的可用性计算模型</li>
+<li><strong>SLO指标体系</strong>：SLI&#x2F;SLO&#x2F;SLA三层服务质量管理框架  </li>
+<li><strong>错误预算机制</strong>：平衡迭代速度与稳定性的量化工具</li>
+<li><strong>故障分类方法</strong>：变更类、容量类、依赖类、环境类、人为类五大故障源</li>
+<li><strong>三阶段保障体系</strong>：事前预防、事中响应、事后改进的完整闭环</li>
+</ol>
+<h3 id="实践价值"><a href="#实践价值" class="headerlink" title="实践价值"></a>实践价值</h3><ul>
+<li><strong>为技术决策提供量化依据</strong>：通过错误预算指导功能发布与稳定性投入的平衡</li>
+<li><strong>建立统一的可靠性语言</strong>：团队间基于SLO进行协作和责任边界划分</li>
+<li><strong>构建持续改进机制</strong>：通过故障复盘和度量反馈驱动系统演进</li>
+</ul>
+<h3 id="下篇内容预告"><a href="#下篇内容预告" class="headerlink" title="下篇内容预告"></a>下篇内容预告</h3><p>系列第二篇《技术实现与架构设计实战》将深入探讨：</p>
+<ul>
+<li><strong>单节点防护机制</strong>：限流、熔断、超时、降级、重试的工程实现</li>
+<li><strong>分布式架构设计</strong>：同城双活、异地多活、单元化架构的技术方案</li>
+<li><strong>工程实践验证</strong>：混沌工程、全链路压测的实施方法</li>
+</ul>
+<p>理论指导实践，实践验证理论。掌握了本篇的SRE理论基础后，下篇将为您展示如何将这些理念转化为具体的技术实现。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://sre.google/sre-book/embracing-risk/">《Google SRE: 拥抱风险》</a></li>
+<li><a href="https://codingwhat.github.io/2024/07/17/service-high-available-governance/">《服务高可用治理系列（二）：技术实现与架构设计实战》</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84/" class="category-chain-item">系统架构</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84/%E6%9C%8D%E5%8A%A1%E6%B2%BB%E7%90%86/" class="category-chain-item">服务治理</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8%E6%B2%BB%E7%90%86/" class="print-no-link">#高可用治理</a>
+      
+        <a href="/tags/SRE/" class="print-no-link">#SRE</a>
+      
+        <a href="/tags/%E6%9C%8D%E5%8A%A1%E7%AD%89%E7%BA%A7%E7%9B%AE%E6%A0%87/" class="print-no-link">#服务等级目标</a>
+      
+        <a href="/tags/%E9%94%99%E8%AF%AF%E9%A2%84%E7%AE%97/" class="print-no-link">#错误预算</a>
+      
+        <a href="/tags/%E5%8F%AF%E8%A7%82%E6%B5%8B%E6%80%A7/" class="print-no-link">#可观测性</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>服务高可用治理系列（一）：SRE理论基础与度量体系</div>
+      <div>http://codingwhat.github.io/2024/07/28/service-avaliable/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>codingWhat</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年7月28日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/08/05/local-cache-go-impl/" title="实现高性能的本地缓存库">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">实现高性能的本地缓存库</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/07/17/service-high-available-governance/" title="服务高可用治理系列（二）：技术实现与架构设计实战">
+                        <span class="hidden-mobile">服务高可用治理系列（二）：技术实现与架构设计实战</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"bp8GoUBWrJcqrTcWZR7ark7W-gzGzoHsz","appKey":"72QDRB9uHrgahwILCMXUBqo7","path":"window.location.pathname","placeholder":"说点什么","avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Coding What</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         人
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
