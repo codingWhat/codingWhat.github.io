@@ -257,14 +257,14 @@
       <h2 class="index-header">
         
         <a href="/2024/09/19/rwmutex-deadlock/" target="_self">
-          golang读锁导致的死锁问题分析
+          Go RWMutex读锁重入死锁问题深度分析
         </a>
       </h2>
 
       
       <a class="index-excerpt index-excerpt__noimg" href="/2024/09/19/rwmutex-deadlock/" target="_self">
         <div>
-          本文来探讨下业务中错误使用sync.RWMutex的读锁而导致的死锁问题。
+          本文深度分析Go语言中sync.RWMutex读锁重入导致的死锁问题，通过源码解析和实际案例，揭示问题本质并提供解决方案。
         </div>
       </a>
 
@@ -278,15 +278,38 @@
           </div>
         
         
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Go%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/" class="category-chain-item">Go并发编程</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
         
           <div class="post-meta">
             <i class="iconfont icon-tags"></i>
             
-              <a href="/tags/GO/">#GO</a>
-            
-              <a href="/tags/deadlock/">#deadlock</a>
+              <a href="/tags/Go/">#Go</a>
             
               <a href="/tags/RWMutex/">#RWMutex</a>
+            
+              <a href="/tags/%E6%AD%BB%E9%94%81/">#死锁</a>
+            
+              <a href="/tags/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/">#并发编程</a>
             
           </div>
         
@@ -487,14 +510,14 @@
       <h2 class="index-header">
         
         <a href="/2023/08/09/gmp-understanding/" target="_self">
-          GMP学习总结
+          Go语言GMP调度器深度解析
         </a>
       </h2>
 
       
       <a class="index-excerpt index-excerpt__noimg" href="/2023/08/09/gmp-understanding/" target="_self">
         <div>
-          调度器前世今生调度器核心职责就是通过复用线程来高效执行G, 目前GMP模型已经非常高效了，然而调度器也是经过一步一步演进来的，早期调度器只有G、M以及全局‘runq’，性能表现并不出色，尤其随着goroutine数增长，当m从全局队列消费G时会导致锁竞争非常严重，除此之外系统调用、阻塞等操作时M会休眠，此时M上的G得不到执行，严重影响性能。为了解决这些问题，Go开发者重新设计调度器，推出了当前“G
+          调度器发展历程Go语言调度器的核心职责是通过高效的线程复用机制来执行大量的Goroutine。当前的GMP模型是经过多次迭代优化的结果。 早期GM模型的限制早期调度器采用GM二元模型，存在以下性能瓶颈：  全局锁竞争：所有M（Machine）竞争同一个全局运行队列，随着Goroutine数量增长，锁竞争愈发严重 CPU利用率低：M执行系统调用或阻塞操作时会休眠，绑定在该M上的Goroutine无法
         </div>
       </a>
 
