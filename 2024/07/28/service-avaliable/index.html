@@ -16,12 +16,12 @@
   <meta name="author" content="codingWhat">
   <meta name="keywords" content="evanhan codingWhat 博客 韩伟的博客 系统设计 后端开发">
   
-    <meta name="description" content="服务可用性治理：理论基础与工程实践核心概念定义服务可用性的量化指标服务可用性在工程实践中通常采用以下公式进行量化： 1可用性 &#x3D; MTTF &#x2F; (MTTR + MTTF) × 100%  关键指标解释：  **MTTF (Mean Time To Failure)**：平均无故障时间，衡量系统稳定性的核心指标 **MTTR (Mean Time To Repair)**：平均故障修复时间，反映系统">
+    <meta name="description" content="本文是服务高可用治理系列的第一篇，重点介绍SRE理论基础、可用性度量体系和监控告警设计。系列第二篇将深入探讨具体的技术实现和架构设计。  服务高可用治理系列（一）：SRE理论基础与度量体系核心概念定义服务可用性的量化指标服务可用性在工程实践中通常采用以下公式进行量化： 1可用性 &#x3D; MTTF &#x2F; (MTTR + MTTF) × 100%  关键指标解释：  **MTTF (Mean Time T">
 <meta property="og:type" content="article">
-<meta property="og:title" content="服务可用性治理：理论基础与工程实践">
+<meta property="og:title" content="服务高可用治理系列（一）：SRE理论基础与度量体系">
 <meta property="og:url" content="http://codingwhat.github.io/2024/07/28/service-avaliable/index.html">
 <meta property="og:site_name" content="codingWhat Blog">
-<meta property="og:description" content="服务可用性治理：理论基础与工程实践核心概念定义服务可用性的量化指标服务可用性在工程实践中通常采用以下公式进行量化： 1可用性 &#x3D; MTTF &#x2F; (MTTR + MTTF) × 100%  关键指标解释：  **MTTF (Mean Time To Failure)**：平均无故障时间，衡量系统稳定性的核心指标 **MTTR (Mean Time To Repair)**：平均故障修复时间，反映系统">
+<meta property="og:description" content="本文是服务高可用治理系列的第一篇，重点介绍SRE理论基础、可用性度量体系和监控告警设计。系列第二篇将深入探讨具体的技术实现和架构设计。  服务高可用治理系列（一）：SRE理论基础与度量体系核心概念定义服务可用性的量化指标服务可用性在工程实践中通常采用以下公式进行量化： 1可用性 &#x3D; MTTF &#x2F; (MTTR + MTTF) × 100%  关键指标解释：  **MTTF (Mean Time T">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://codingwhat.github.io/images/available_metric.png">
 <meta property="og:image" content="http://codingwhat.github.io/images/sa_fail_type.png">
@@ -33,19 +33,19 @@
 <meta property="og:image" content="http://codingwhat.github.io/images/sa_fail_solve.png">
 <meta property="og:image" content="http://codingwhat.github.io/images/sa_process.png">
 <meta property="article:published_time" content="2024-07-28T09:52:10.000Z">
-<meta property="article:modified_time" content="2025-08-17T13:17:50.341Z">
+<meta property="article:modified_time" content="2025-08-17T15:25:40.481Z">
 <meta property="article:author" content="codingWhat">
-<meta property="article:tag" content="服务可用性">
+<meta property="article:tag" content="高可用治理">
 <meta property="article:tag" content="SRE">
-<meta property="article:tag" content="微服务治理">
-<meta property="article:tag" content="系统稳定性">
+<meta property="article:tag" content="服务等级目标">
+<meta property="article:tag" content="错误预算">
 <meta property="article:tag" content="可观测性">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="http://codingwhat.github.io/images/available_metric.png">
   
   
   
-  <title>服务可用性治理：理论基础与工程实践 - codingWhat Blog</title>
+  <title>服务高可用治理系列（一）：SRE理论基础与度量体系 - codingWhat Blog</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -240,7 +240,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="服务可用性治理：理论基础与工程实践"></span>
+            <span id="subtitle" data-typed-text="服务高可用治理系列（一）：SRE理论基础与度量体系"></span>
           
         </div>
 
@@ -263,7 +263,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          3.6k 字
+          4.1k 字
         
       </span>
     
@@ -274,7 +274,7 @@
         
         
         
-          31 分钟
+          35 分钟
         
       </span>
     
@@ -319,12 +319,15 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">服务可用性治理：理论基础与工程实践</h1>
+            <h1 id="seo-header">服务高可用治理系列（一）：SRE理论基础与度量体系</h1>
             
             
               <div class="markdown-body">
                 
-                <h1 id="服务可用性治理：理论基础与工程实践"><a href="#服务可用性治理：理论基础与工程实践" class="headerlink" title="服务可用性治理：理论基础与工程实践"></a>服务可用性治理：理论基础与工程实践</h1><h2 id="核心概念定义"><a href="#核心概念定义" class="headerlink" title="核心概念定义"></a>核心概念定义</h2><h3 id="服务可用性的量化指标"><a href="#服务可用性的量化指标" class="headerlink" title="服务可用性的量化指标"></a>服务可用性的量化指标</h3><p>服务可用性在工程实践中通常采用以下公式进行量化：</p>
+                <blockquote>
+<p>本文是服务高可用治理系列的第一篇，重点介绍SRE理论基础、可用性度量体系和监控告警设计。系列第二篇将深入探讨具体的技术实现和架构设计。</p>
+</blockquote>
+<h1 id="服务高可用治理系列（一）：SRE理论基础与度量体系"><a href="#服务高可用治理系列（一）：SRE理论基础与度量体系" class="headerlink" title="服务高可用治理系列（一）：SRE理论基础与度量体系"></a>服务高可用治理系列（一）：SRE理论基础与度量体系</h1><h2 id="核心概念定义"><a href="#核心概念定义" class="headerlink" title="核心概念定义"></a>核心概念定义</h2><h3 id="服务可用性的量化指标"><a href="#服务可用性的量化指标" class="headerlink" title="服务可用性的量化指标"></a>服务可用性的量化指标</h3><p>服务可用性在工程实践中通常采用以下公式进行量化：</p>
 <figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs gcode">可用性 = MTTF / <span class="hljs-comment">(MTTR + MTTF)</span> × <span class="hljs-number">100</span><span class="hljs-meta">%</span><br></code></pre></td></tr></table></figure>
 
 <p><strong>关键指标解释：</strong></p>
@@ -487,7 +490,7 @@
 <li><strong>灰度兼容</strong>：新老版本并存期间的兼容性处理</li>
 </ul>
 <blockquote>
-<p>详细的服务治理实践可参考：<a href="https://codingwhat.github.io/2024/07/17/serive-high-available-governance/">《服务高可用治理实战》</a></p>
+<p>具体的技术实现和架构设计详见系列第二篇：<a href="https://codingwhat.github.io/2024/07/17/service-high-available-governance/">《服务高可用治理系列（二）：技术实现与架构设计实战》</a></p>
 </blockquote>
 <h4 id="4-容量规划与评估"><a href="#4-容量规划与评估" class="headerlink" title="4. 容量规划与评估"></a>4. 容量规划与评估</h4><p><strong>流量预测：</strong></p>
 <ul>
@@ -619,9 +622,30 @@
 <li><strong>稳定性投入</strong>：预算不足时优先投入稳定性改进</li>
 <li><strong>风险评估</strong>：量化新功能发布的风险成本</li>
 </ul>
-<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><blockquote>
-<p><a target="_blank" rel="noopener" href="https://sre.google/sre-book/embracing-risk/">《Google SRE: 拥抱风险》</a></p>
-</blockquote>
+<h2 id="系列总结与下篇预告"><a href="#系列总结与下篇预告" class="headerlink" title="系列总结与下篇预告"></a>系列总结与下篇预告</h2><p>本文作为服务高可用治理系列的第一篇，建立了完整的SRE理论基础：</p>
+<h3 id="核心要点回顾"><a href="#核心要点回顾" class="headerlink" title="核心要点回顾"></a>核心要点回顾</h3><ol>
+<li><strong>量化度量体系</strong>：基于MTTF&#x2F;MTTR构建的可用性计算模型</li>
+<li><strong>SLO指标体系</strong>：SLI&#x2F;SLO&#x2F;SLA三层服务质量管理框架  </li>
+<li><strong>错误预算机制</strong>：平衡迭代速度与稳定性的量化工具</li>
+<li><strong>故障分类方法</strong>：变更类、容量类、依赖类、环境类、人为类五大故障源</li>
+<li><strong>三阶段保障体系</strong>：事前预防、事中响应、事后改进的完整闭环</li>
+</ol>
+<h3 id="实践价值"><a href="#实践价值" class="headerlink" title="实践价值"></a>实践价值</h3><ul>
+<li><strong>为技术决策提供量化依据</strong>：通过错误预算指导功能发布与稳定性投入的平衡</li>
+<li><strong>建立统一的可靠性语言</strong>：团队间基于SLO进行协作和责任边界划分</li>
+<li><strong>构建持续改进机制</strong>：通过故障复盘和度量反馈驱动系统演进</li>
+</ul>
+<h3 id="下篇内容预告"><a href="#下篇内容预告" class="headerlink" title="下篇内容预告"></a>下篇内容预告</h3><p>系列第二篇《技术实现与架构设计实战》将深入探讨：</p>
+<ul>
+<li><strong>单节点防护机制</strong>：限流、熔断、超时、降级、重试的工程实现</li>
+<li><strong>分布式架构设计</strong>：同城双活、异地多活、单元化架构的技术方案</li>
+<li><strong>工程实践验证</strong>：混沌工程、全链路压测的实施方法</li>
+</ul>
+<p>理论指导实践，实践验证理论。掌握了本篇的SRE理论基础后，下篇将为您展示如何将这些理念转化为具体的技术实现。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://sre.google/sre-book/embracing-risk/">《Google SRE: 拥抱风险》</a></li>
+<li><a href="https://codingwhat.github.io/2024/07/17/service-high-available-governance/">《服务高可用治理系列（二）：技术实现与架构设计实战》</a></li>
+</ul>
 
                 
               </div>
@@ -662,13 +686,13 @@
     <div class="post-meta">
       <i class="iconfont icon-tags"></i>
       
-        <a href="/tags/%E6%9C%8D%E5%8A%A1%E5%8F%AF%E7%94%A8%E6%80%A7/" class="print-no-link">#服务可用性</a>
+        <a href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8%E6%B2%BB%E7%90%86/" class="print-no-link">#高可用治理</a>
       
         <a href="/tags/SRE/" class="print-no-link">#SRE</a>
       
-        <a href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1%E6%B2%BB%E7%90%86/" class="print-no-link">#微服务治理</a>
+        <a href="/tags/%E6%9C%8D%E5%8A%A1%E7%AD%89%E7%BA%A7%E7%9B%AE%E6%A0%87/" class="print-no-link">#服务等级目标</a>
       
-        <a href="/tags/%E7%B3%BB%E7%BB%9F%E7%A8%B3%E5%AE%9A%E6%80%A7/" class="print-no-link">#系统稳定性</a>
+        <a href="/tags/%E9%94%99%E8%AF%AF%E9%A2%84%E7%AE%97/" class="print-no-link">#错误预算</a>
       
         <a href="/tags/%E5%8F%AF%E8%A7%82%E6%B5%8B%E6%80%A7/" class="print-no-link">#可观测性</a>
       
@@ -682,7 +706,7 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>服务可用性治理：理论基础与工程实践</div>
+      <div>服务高可用治理系列（一）：SRE理论基础与度量体系</div>
       <div>http://codingwhat.github.io/2024/07/28/service-avaliable/</div>
     </div>
     <div class="license-meta">
@@ -737,8 +761,8 @@
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2024/07/17/service-high-available-governance/" title="服务高可用治理：从单节点到分布式架构的实践指南">
-                        <span class="hidden-mobile">服务高可用治理：从单节点到分布式架构的实践指南</span>
+                      <a href="/2024/07/17/service-high-available-governance/" title="服务高可用治理系列（二）：技术实现与架构设计实战">
+                        <span class="hidden-mobile">服务高可用治理系列（二）：技术实现与架构设计实战</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>

@@ -16,12 +16,12 @@
   <meta name="author" content="codingWhat">
   <meta name="keywords" content="evanhan codingWhat 博客 韩伟的博客 系统设计 后端开发">
   
-    <meta name="description" content="本文基于Google SRE理论与工程实践，系统性阐述服务高可用治理体系。从单节点防护机制到分布式架构设计，深入探讨限流、熔断、超时控制、降级、重试等关键技术。重点补充SLO指标体系、告警监控、错误预算与燃尽率等SRE核心实践，为后端工程师提供完整的可用性治理解决方案。">
+    <meta name="description" content="本文是服务高可用治理系列的第二篇，基于系列第一篇的SRE理论基础，深入探讨单节点防护机制到分布式架构的具体实现。涵盖限流、熔断、超时控制、降级、重试等关键技术的工程实践，为后端工程师提供完整的技术实现指南。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="服务高可用治理：从单节点到分布式架构的实践指南">
+<meta property="og:title" content="服务高可用治理系列（二）：技术实现与架构设计实战">
 <meta property="og:url" content="http://codingwhat.github.io/2024/07/17/service-high-available-governance/index.html">
 <meta property="og:site_name" content="codingWhat Blog">
-<meta property="og:description" content="本文基于Google SRE理论与工程实践，系统性阐述服务高可用治理体系。从单节点防护机制到分布式架构设计，深入探讨限流、熔断、超时控制、降级、重试等关键技术。重点补充SLO指标体系、告警监控、错误预算与燃尽率等SRE核心实践，为后端工程师提供完整的可用性治理解决方案。">
+<meta property="og:description" content="本文是服务高可用治理系列的第二篇，基于系列第一篇的SRE理论基础，深入探讨单节点防护机制到分布式架构的具体实现。涵盖限流、熔断、超时控制、降级、重试等关键技术的工程实践，为后端工程师提供完整的技术实现指南。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://codingwhat.github.io/images/limiter.png">
 <meta property="og:image" content="http://codingwhat.github.io/images/circuit_breaker.png">
@@ -38,19 +38,19 @@
 <meta property="og:image" content="http://codingwhat.github.io/images/two_of_random_choices.png">
 <meta property="og:image" content="http://codingwhat.github.io/images/two_of_random_choices_algo.png">
 <meta property="article:published_time" content="2024-07-17T08:41:53.000Z">
-<meta property="article:modified_time" content="2025-08-17T14:50:02.661Z">
+<meta property="article:modified_time" content="2025-08-17T15:25:14.141Z">
 <meta property="article:author" content="codingWhat">
-<meta property="article:tag" content="SRE">
+<meta property="article:tag" content="高可用治理">
 <meta property="article:tag" content="微服务治理">
-<meta property="article:tag" content="高可用">
 <meta property="article:tag" content="分布式系统">
-<meta property="article:tag" content="稳定性建设">
+<meta property="article:tag" content="限流熔断">
+<meta property="article:tag" content="架构设计">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="http://codingwhat.github.io/images/limiter.png">
   
   
   
-  <title>服务高可用治理：从单节点到分布式架构的实践指南 - codingWhat Blog</title>
+  <title>服务高可用治理系列（二）：技术实现与架构设计实战 - codingWhat Blog</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -245,7 +245,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="服务高可用治理：从单节点到分布式架构的实践指南"></span>
+            <span id="subtitle" data-typed-text="服务高可用治理系列（二）：技术实现与架构设计实战"></span>
           
         </div>
 
@@ -279,7 +279,7 @@
         
         
         
-          102 分钟
+          97 分钟
         
       </span>
     
@@ -324,61 +324,20 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">服务高可用治理：从单节点到分布式架构的实践指南</h1>
+            <h1 id="seo-header">服务高可用治理系列（二）：技术实现与架构设计实战</h1>
             
             
               <div class="markdown-body">
                 
                 <blockquote>
-<p>本文基于Google SRE理论与工程实践，系统性阐述服务高可用治理体系。从单节点防护机制到分布式架构设计，深入探讨限流、熔断、超时控制、降级、重试等关键技术。重点补充SLO指标体系、告警监控、错误预算与燃尽率等SRE核心实践，为后端工程师提供完整的可用性治理解决方案。</p>
+<p>本文是服务高可用治理系列的第二篇，基于系列第一篇的SRE理论基础，深入探讨单节点防护机制到分布式架构的具体实现。涵盖限流、熔断、超时控制、降级、重试等关键技术的工程实践，为后端工程师提供完整的技术实现指南。</p>
 </blockquote>
 <span id="more"></span>
 
-<h1 id="高可用治理基础体系"><a href="#高可用治理基础体系" class="headerlink" title="高可用治理基础体系"></a>高可用治理基础体系</h1><h2 id="SLO体系设计与指标制定"><a href="#SLO体系设计与指标制定" class="headerlink" title="SLO体系设计与指标制定"></a>SLO体系设计与指标制定</h2><h3 id="SLI-SLO-SLA体系概述"><a href="#SLI-SLO-SLA体系概述" class="headerlink" title="SLI&#x2F;SLO&#x2F;SLA体系概述"></a>SLI&#x2F;SLO&#x2F;SLA体系概述</h3><p>根据Google SRE理论，可靠性工程建立在精确的指标体系之上：</p>
-<ul>
-<li>**SLI (Service Level Indicator)**：可量化的服务质量指标，如延迟、可用性、吞吞量</li>
-<li>**SLO (Service Level Objective)**：内部服务质量目标，如99.95%可用性、P95延迟&lt;100ms  </li>
-<li>**SLA (Service Level Agreement)**：对外承诺的服务水平，通常比SLO放宽10-100倍</li>
-</ul>
-<h3 id="可用性等级与错误预算"><a href="#可用性等级与错误预算" class="headerlink" title="可用性等级与错误预算"></a>可用性等级与错误预算</h3><table>
-<thead>
-<tr>
-<th>可用性等级</th>
-<th>年停机时间</th>
-<th>月停机时间</th>
-<th>日错误预算</th>
-<th>应用场景</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>99.9%</td>
-<td>8.77小时</td>
-<td>43.8分钟</td>
-<td>86.4秒</td>
-<td>一般业务</td>
-</tr>
-<tr>
-<td>99.95%</td>
-<td>4.38小时</td>
-<td>21.9分钟</td>
-<td>43.2秒</td>
-<td>重要业务</td>
-</tr>
-<tr>
-<td>99.99%</td>
-<td>52.6分钟</td>
-<td>4.38分钟</td>
-<td>8.64秒</td>
-<td>核心业务</td>
-</tr>
-<tr>
-<td>99.999%</td>
-<td>5.26分钟</td>
-<td>26.3秒</td>
-<td>0.864秒</td>
-<td>金融级业务</td>
-</tr>
-</tbody></table>
+<h1 id="技术实现基础"><a href="#技术实现基础" class="headerlink" title="技术实现基础"></a>技术实现基础</h1><blockquote>
+<p>本文基于系列第一篇介绍的SRE理论基础，重点讲解具体的技术实现。建议先阅读：<a href="https://codingwhat.github.io/2024/07/28/service-avaliable/">《服务高可用治理系列（一）：SRE理论基础与度量体系》</a></p>
+</blockquote>
+<h2 id="SLO指标体系实战配置"><a href="#SLO指标体系实战配置" class="headerlink" title="SLO指标体系实战配置"></a>SLO指标体系实战配置</h2><p>基于系列第一篇介绍的SLI&#x2F;SLO&#x2F;SLA体系理论，本节重点介绍具体的配置实现和工程实践。</p>
 <h3 id="SLI指标选择与业务场景匹配"><a href="#SLI指标选择与业务场景匹配" class="headerlink" title="SLI指标选择与业务场景匹配"></a>SLI指标选择与业务场景匹配</h3><h4 id="用户感知维度分析"><a href="#用户感知维度分析" class="headerlink" title="用户感知维度分析"></a>用户感知维度分析</h4><p><strong>基于业务特征的指标优先级设计</strong>：</p>
 <table>
 <thead>
@@ -476,73 +435,10 @@
 <p><strong>告警阈值设计的数学模型</strong>：</p>
 <figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs golang"><span class="hljs-comment">// 燃尽率告警阈值计算</span><br><span class="hljs-keyword">type</span> BurnRateAlert <span class="hljs-keyword">struct</span> &#123;<br>    SLOTarget     <span class="hljs-type">float64</span> <span class="hljs-comment">// 如0.9995 (99.95%)</span><br>    BurnRate      <span class="hljs-type">float64</span> <span class="hljs-comment">// 燃尽倍数，如10倍</span><br>    WindowSize    time.Duration<br>    AlertSeverity <span class="hljs-type">string</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(b *BurnRateAlert)</span></span> CalculateThreshold() <span class="hljs-type">float64</span> &#123;<br>    errorBudget := <span class="hljs-number">1</span> - b.SLOTarget           <span class="hljs-comment">// 0.0005 (0.05%)</span><br>    burnErrorRate := errorBudget * b.BurnRate <span class="hljs-comment">// 0.005 (0.5%)</span><br>    alertThreshold := <span class="hljs-number">1</span> - burnErrorRate      <span class="hljs-comment">// 0.995 (99.5%)</span><br>    <span class="hljs-keyword">return</span> alertThreshold<br>&#125;<br><br><span class="hljs-comment">// 告警窗口大小决策</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(b *BurnRateAlert)</span></span> OptimalWindow() time.Duration &#123;<br>    <span class="hljs-comment">// 高燃尽率 = 短窗口，快速检测</span><br>    <span class="hljs-comment">// 低燃尽率 = 长窗口，减少误报</span><br>    <span class="hljs-keyword">if</span> b.BurnRate &gt;= <span class="hljs-number">10</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">2</span> * time.Minute<br>    &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> b.BurnRate &gt;= <span class="hljs-number">4</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">1</span> * time.Hour  <br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">6</span> * time.Hour<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
 
-<h2 id="监控告警体系建设"><a href="#监控告警体系建设" class="headerlink" title="监控告警体系建设"></a>监控告警体系建设</h2><h3 id="告警设计原则"><a href="#告警设计原则" class="headerlink" title="告警设计原则"></a>告警设计原则</h3><p>基于Google SRE最佳实践，告警系统应遵循以下原则：</p>
-<p><strong>1. 错误预算驱动的告警策略</strong></p>
-<ul>
-<li>快速燃尽检测：2%错误预算在短时间内（5分钟）消耗完毕</li>
-<li>缓慢燃尽检测：10%错误预算在长时间内（1小时）消耗完毕  </li>
-<li>预测性告警：根据当前消耗速率预测错误预算耗尽时间</li>
-</ul>
-<p><strong>2. 多窗口燃尽率告警（Multi-window Burn Rate）</strong></p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># 四个严重级别的燃尽率检测</span><br><span class="hljs-attr">burn_rate_alerts:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">&quot;critical_burn_rate&quot;</span><br>    <span class="hljs-attr">short_window:</span> <span class="hljs-string">&quot;1m&quot;</span><br>    <span class="hljs-attr">long_window:</span> <span class="hljs-string">&quot;5m&quot;</span> <br>    <span class="hljs-attr">burn_rate:</span> <span class="hljs-number">14.4</span>    <span class="hljs-comment"># 消耗速率14.4倍意味着1小时内耗尽预算</span><br>    <span class="hljs-attr">severity:</span> <span class="hljs-string">&quot;page&quot;</span><br>    <br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">&quot;high_burn_rate&quot;</span><br>    <span class="hljs-attr">short_window:</span> <span class="hljs-string">&quot;5m&quot;</span><br>    <span class="hljs-attr">long_window:</span> <span class="hljs-string">&quot;30m&quot;</span><br>    <span class="hljs-attr">burn_rate:</span> <span class="hljs-number">6</span>       <span class="hljs-comment"># 6倍速率，4小时耗尽</span><br>    <span class="hljs-attr">severity:</span> <span class="hljs-string">&quot;page&quot;</span><br>    <br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">&quot;medium_burn_rate&quot;</span> <br>    <span class="hljs-attr">short_window:</span> <span class="hljs-string">&quot;30m&quot;</span><br>    <span class="hljs-attr">long_window:</span> <span class="hljs-string">&quot;6h&quot;</span><br>    <span class="hljs-attr">burn_rate:</span> <span class="hljs-number">1</span>       <span class="hljs-comment"># 正常速率，24小时耗尽</span><br>    <span class="hljs-attr">severity:</span> <span class="hljs-string">&quot;ticket&quot;</span><br>    <br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">&quot;low_burn_rate&quot;</span><br>    <span class="hljs-attr">short_window:</span> <span class="hljs-string">&quot;6h&quot;</span> <br>    <span class="hljs-attr">long_window:</span> <span class="hljs-string">&quot;3d&quot;</span><br>    <span class="hljs-attr">burn_rate:</span> <span class="hljs-number">0.25</span>    <span class="hljs-comment"># 慢速燃尽，需要关注趋势</span><br>    <span class="hljs-attr">severity:</span> <span class="hljs-string">&quot;ticket&quot;</span><br></code></pre></td></tr></table></figure>
-
-<p><strong>3. 告警维度设计</strong></p>
-<table>
-<thead>
-<tr>
-<th>告警维度</th>
-<th>监控指标</th>
-<th>阈值配置</th>
-<th>告警级别</th>
-<th>处理时效</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>可用性</td>
-<td>success_rate &lt; 99.5%</td>
-<td>2min&#x2F;1hour</td>
-<td>Critical&#x2F;Warning</td>
-<td>5min&#x2F;30min</td>
-</tr>
-<tr>
-<td>延迟</td>
-<td>P95 &gt; 500ms, P99 &gt; 1s</td>
-<td>5min</td>
-<td>Warning</td>
-<td>15min</td>
-</tr>
-<tr>
-<td>错误率</td>
-<td>5xx_rate &gt; 1%</td>
-<td>3min</td>
-<td>Critical</td>
-<td>5min</td>
-</tr>
-<tr>
-<td>吞吐量</td>
-<td>QPS下降 &gt; 50%</td>
-<td>5min</td>
-<td>Warning</td>
-<td>10min</td>
-</tr>
-<tr>
-<td>依赖服务</td>
-<td>下游成功率 &lt; 95%</td>
-<td>3min</td>
-<td>Warning</td>
-<td>10min</td>
-</tr>
-</tbody></table>
-<h3 id="燃尽率计算与预测"><a href="#燃尽率计算与预测" class="headerlink" title="燃尽率计算与预测"></a>燃尽率计算与预测</h3><p><strong>错误预算燃尽速率</strong>计算公式：</p>
-<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs gcode">燃尽率 = <span class="hljs-comment">(1 - 当前可用性)</span> / <span class="hljs-comment">(1 - SLO目标)</span><br></code></pre></td></tr></table></figure>
-
-<p><strong>实际案例</strong>：某服务SLO目标99.95%，当前1小时窗口可用性99.9%</p>
-<figure class="highlight abnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs abnf">燃尽率 <span class="hljs-operator">=</span> (<span class="hljs-number">1</span> - <span class="hljs-number">0.999</span>) / (<span class="hljs-number">1</span> - <span class="hljs-number">0.9995</span>) <span class="hljs-operator">=</span> <span class="hljs-number">0.001</span> / <span class="hljs-number">0.0005</span> <span class="hljs-operator">=</span> <span class="hljs-number">2.0</span><br><br>解读：当前以<span class="hljs-number">2</span>倍速率消耗错误预算，预计<span class="hljs-number">12</span>小时耗尽月度预算<br></code></pre></td></tr></table></figure>
-
-<p><strong>燃尽预测模型</strong>：</p>
-<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs golang"><span class="hljs-comment">// 错误预算燃尽预测</span><br><span class="hljs-keyword">type</span> BurnRatePredictor <span class="hljs-keyword">struct</span> &#123;<br>    SLOTarget    <span class="hljs-type">float64</span>  <span class="hljs-comment">// SLO目标，如0.9995</span><br>    TimeWindow   <span class="hljs-type">int</span>      <span class="hljs-comment">// 预算周期，如30天</span><br>    CurrentRate  <span class="hljs-type">float64</span>  <span class="hljs-comment">// 当前错误率</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *BurnRatePredictor)</span></span> PredictExhaustionTime() time.Duration &#123;<br>    <span class="hljs-keyword">if</span> p.CurrentRate &lt;= (<span class="hljs-number">1</span> - p.SLOTarget) &#123;<br>        <span class="hljs-keyword">return</span> time.Duration(math.MaxInt64) <span class="hljs-comment">// 不会耗尽</span><br>    &#125;<br>    <br>    burnRate := p.CurrentRate / (<span class="hljs-number">1</span> - p.SLOTarget)<br>    daysToExhaustion := <span class="hljs-type">float64</span>(p.TimeWindow) / burnRate<br>    <br>    <span class="hljs-keyword">return</span> time.Duration(daysToExhaustion * <span class="hljs-number">24</span>) * time.Hour<br>&#125;<br></code></pre></td></tr></table></figure>
-
-<h3 id="告警阈值优化实践"><a href="#告警阈值优化实践" class="headerlink" title="告警阈值优化实践"></a>告警阈值优化实践</h3><p><strong>1. 基于历史数据的动态阈值</strong></p>
+<h2 id="高级监控告警配置"><a href="#高级监控告警配置" class="headerlink" title="高级监控告警配置"></a>高级监控告警配置</h2><blockquote>
+<p>监控告警的基础原理和燃尽率概念已在系列第一篇详细介绍，本节重点讲解具体的配置实现和优化技巧。</p>
+</blockquote>
+<h3 id="告警阈值动态优化"><a href="#告警阈值动态优化" class="headerlink" title="告警阈值动态优化"></a>告警阈值动态优化</h3><p><strong>1. 基于历史数据的智能阈值</strong></p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># P95延迟动态阈值计算</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">calculate_dynamic_threshold</span>(<span class="hljs-params">historical_p95, days=<span class="hljs-number">30</span></span>):<br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    基于最近30天P95延迟计算动态告警阈值</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br>    mean_p95 = np.mean(historical_p95)<br>    std_p95 = np.std(historical_p95)<br>    <br>    <span class="hljs-comment"># 设置为 均值 + 2倍标准差，覆盖95%的正常情况</span><br>    dynamic_threshold = mean_p95 + <span class="hljs-number">2</span> * std_p95<br>    <br>    <span class="hljs-comment"># 设置合理的上下界</span><br>    min_threshold = <span class="hljs-number">100</span>  <span class="hljs-comment"># 最小100ms</span><br>    max_threshold = <span class="hljs-number">2000</span> <span class="hljs-comment"># 最大2s</span><br>    <br>    <span class="hljs-keyword">return</span> <span class="hljs-built_in">max</span>(min_threshold, <span class="hljs-built_in">min</span>(dynamic_threshold, max_threshold))<br></code></pre></td></tr></table></figure>
 
 <p><strong>2. 业务影响度加权告警</strong></p>
@@ -1188,19 +1084,47 @@
             <div>
               <div class="post-metas my-3">
   
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84/" class="category-chain-item">系统架构</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84/%E6%9C%8D%E5%8A%A1%E6%B2%BB%E7%90%86/" class="category-chain-item">服务治理</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
   
     <div class="post-meta">
       <i class="iconfont icon-tags"></i>
       
-        <a href="/tags/SRE/" class="print-no-link">#SRE</a>
+        <a href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8%E6%B2%BB%E7%90%86/" class="print-no-link">#高可用治理</a>
       
         <a href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1%E6%B2%BB%E7%90%86/" class="print-no-link">#微服务治理</a>
       
-        <a href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" class="print-no-link">#高可用</a>
-      
         <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/" class="print-no-link">#分布式系统</a>
       
-        <a href="/tags/%E7%A8%B3%E5%AE%9A%E6%80%A7%E5%BB%BA%E8%AE%BE/" class="print-no-link">#稳定性建设</a>
+        <a href="/tags/%E9%99%90%E6%B5%81%E7%86%94%E6%96%AD/" class="print-no-link">#限流熔断</a>
+      
+        <a href="/tags/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/" class="print-no-link">#架构设计</a>
       
     </div>
   
@@ -1212,7 +1136,7 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>服务高可用治理：从单节点到分布式架构的实践指南</div>
+      <div>服务高可用治理系列（二）：技术实现与架构设计实战</div>
       <div>http://codingwhat.github.io/2024/07/17/service-high-available-governance/</div>
     </div>
     <div class="license-meta">
@@ -1257,9 +1181,9 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2024/07/28/service-avaliable/" title="服务可用性治理：理论基础与工程实践">
+                      <a href="/2024/07/28/service-avaliable/" title="服务高可用治理系列（一）：SRE理论基础与度量体系">
                         <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">服务可用性治理：理论基础与工程实践</span>
+                        <span class="hidden-mobile">服务高可用治理系列（一）：SRE理论基础与度量体系</span>
                         <span class="visible-mobile">上一篇</span>
                       </a>
                     
